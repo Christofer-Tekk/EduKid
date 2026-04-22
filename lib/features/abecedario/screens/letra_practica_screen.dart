@@ -1,108 +1,140 @@
 import 'package:flutter/material.dart';
 
-class LetraPracticaScreen extends StatefulWidget {
-  final String letra; // La letra que el niño va a practicar (ej. 'A')
+// 1. Creamos una clase para guardar cada punto con su propio color
+class PuntoColorido {
+  final Offset? punto;
+  final Color color;
+  PuntoColorido({required this.punto, required this.color});
+}
 
+class LetraPracticaScreen extends StatefulWidget {
+  final String letra;
   const LetraPracticaScreen({Key? key, required this.letra}) : super(key: key);
 
   @override
-  _LetraPracticaScreenState createState() => _LetraPracticaScreenState();
+  State<LetraPracticaScreen> createState() => _LetraPracticaScreenState();
 }
 
 class _LetraPracticaScreenState extends State<LetraPracticaScreen> {
-  // Aquí guardamos todos los puntos (coordenadas) por donde pasa el dedo
-  List<Offset?> puntos = [];
+  // 2. Ahora nuestra lista guarda PuntosColoridos en lugar de solo coordenadas
+  List<PuntoColorido> puntos = [];
+  Color colorSeleccionado = Colors.blue; 
+
+  final List<Color> colores = [
+    Colors.blue,
+    Colors.red,
+    Colors.green,
+    Colors.orange,
+    Colors.purple,
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Traza la letra ${widget.letra}'),
-        backgroundColor: Colors.orangeAccent,
         actions: [
-          // Botón para limpiar la pizarra
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: () {
               setState(() {
-                puntos.clear(); // Borra todos los puntos dibujados
+                puntos.clear();
               });
             },
           )
         ],
       ),
-      body: Stack(
+      body: Column(
         children: [
-          // 1. La letra de fondo (marca de agua para que el niño se guíe)
-          Center(
-            child: Text(
-              widget.letra,
-              style: TextStyle(
-                fontSize: 300,
-                color: Colors.grey.withOpacity(0.3), // Semi-transparente
-                fontWeight: FontWeight.bold,
+          Expanded(
+            child: GestureDetector(
+              onPanUpdate: (details) {
+                setState(() {
+                  // SOLUCIÓN AL DESFASE: Usamos localPosition en lugar de globalToLocal
+                  puntos.add(PuntoColorido(
+                    punto: details.localPosition, 
+                    color: colorSeleccionado,
+                  ));
+                });
+              },
+              onPanEnd: (details) {
+                setState(() {
+                  puntos.add(PuntoColorido(
+                    punto: null, 
+                    color: colorSeleccionado,
+                  ));
+                });
+              },
+              child: CustomPaint(
+                painter: PizarraPainter(puntos: puntos),
+                size: Size.infinite,
+                child: Center(
+                  child: Text(
+                    widget.letra,
+                    style: TextStyle(
+                      fontSize: 300,
+                      color: Colors.grey.withOpacity(0.2),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
-          
-          // 2. El detector de toques y el lienzo para dibujar
-          GestureDetector(
-            // Cuando el dedo toca la pantalla
-            onPanStart: (details) {
-              setState(() {
-                puntos.add(details.localPosition);
-              });
-            },
-            // Cuando el dedo se mueve por la pantalla
-            onPanUpdate: (details) {
-              setState(() {
-                puntos.add(details.localPosition);
-              });
-            },
-            // Cuando el niño levanta el dedo
-            onPanEnd: (details) {
-              setState(() {
-                puntos.add(null); // Un punto nulo significa "corte de línea"
-              });
-            },
-            child: CustomPaint(
-              painter: PizarraPainter(puntos: puntos),
-              size: Size.infinite, // Ocupa toda la pantalla disponible
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 20.0),
+            color: Colors.grey[100],
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: colores.map((color) {
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      colorSeleccionado = color;
+                    });
+                  },
+                  child: Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: colorSeleccionado == color ? Colors.black : Colors.transparent,
+                        width: 3,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
-          ),
+          )
         ],
       ),
     );
   }
 }
 
-// =====================================================================
-// CLASE PAINTER: Esta es la que se encarga de renderizar la "tinta"
-// =====================================================================
 class PizarraPainter extends CustomPainter {
-  final List<Offset?> puntos;
+  final List<PuntoColorido> puntos;
 
   PizarraPainter({required this.puntos});
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Configuración del "marcador"
-    Paint pintura = Paint()
-      ..color = Colors.blue // Color del trazo
-      ..strokeCap = StrokeCap.round // Bordes redondeados
-      ..strokeWidth = 15.0; // Grosor de la línea (ideal para niños)
-
-    // Dibujamos las líneas conectando los puntos
     for (int i = 0; i < puntos.length - 1; i++) {
-      if (puntos[i] != null && puntos[i + 1] != null) {
-        // Dibuja una línea entre el punto actual y el siguiente
-        canvas.drawLine(puntos[i]!, puntos[i + 1]!, pintura);
+      if (puntos[i].punto != null && puntos[i + 1].punto != null) {
+        // SOLUCIÓN AL COLOR: Cada línea crea su propia pintura basada en el color guardado
+        Paint pintura = Paint()
+          ..color = puntos[i].color
+          ..strokeCap = StrokeCap.round
+          ..strokeWidth = 15.0;
+
+        canvas.drawLine(puntos[i].punto!, puntos[i + 1].punto!, pintura);
       }
     }
   }
 
   @override
-  bool shouldRepaint(PizarraPainter oldDelegate) {
-    return true; // Se repinta cada vez que agregamos un punto nuevo
-  }
+  bool shouldRepaint(PizarraPainter oldDelegate) => true;
 }
