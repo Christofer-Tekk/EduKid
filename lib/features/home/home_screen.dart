@@ -19,7 +19,7 @@ class HomeScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                 color: Colors.grey[300],
                 child: const Text(
-                  'Logo.png',
+                  'assets/images/logo.png',
                   style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, fontFamily: 'serif'),
                 ),
               ),
