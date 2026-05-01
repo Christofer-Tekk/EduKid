@@ -5,23 +5,52 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.11.3
+  sdk: '>=3.11.3 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
+  youtube_player_flutter: ^9.0.0
+  
+  # --- ANIMACIONES ---
+  rive: ^0.14.5 
+
+  # --- FIREBASE (Lo que faltaba) ---
+  firebase_core: ^3.1.1
+  firebase_auth: ^5.1.1
+  cloud_firestore: ^5.0.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_lints: ^3.0.0 # Versión estable para tu SDK
 
-  flutter_lints: ^6.0.0
+# NUEVAS para abecedario
+  audioplayers: ^5.2.1         # para reproducir audios
+  shared_preferences: ^2.2.2   # para guardar progreso
+  provider: ^6.1.1             # para manejo de estado
+  webview_flutter: ^4.4.1      # para videos YouTube (opcional) 
 
 flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/
+    # IMÁGENES GLOBALES
+    - assets/images/fondo/
+    
+    # CARPETAS DE MÓDULOS (Imágenes)
+    - assets/images/abecedario/
+    - assets/images/numeros/
+    - assets/images/animales/
+    - assets/images/colores/
+    - assets/images/formas/
+    
+    # CARPETAS DE AUDIO
     - assets/audio/
+    - assets/audio/abecedario/
+    - assets/audio/numeros/
+    - assets/audio/animales/
+    - assets/audio/colores/
+    - assets/audio/formas/
