@@ -77,7 +77,7 @@ class MenuScreen extends StatelessWidget {
                     emoji: '✏️',
                     colorTop: const Color(0xFFFF6B9D),
                     colorSombra: const Color(0xFFD6336C),
-                    ruta: '/pizarra',
+                    ruta: '/pizarra_libre',
                   ),
                 ],
               ),
