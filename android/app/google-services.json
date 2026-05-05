@@ -1,0 +1,38 @@
+{
+  "project_info": {
+    "project_number": "921345349849",
+    "project_id": "edukit-85fa4",
+    "storage_bucket": "edukit-85fa4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:921345349849:android:88687bc77c72f29f1046c8",
+        "android_client_info": {
+          "package_name": "com.example.edukid"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "921345349849-41h1o8bmi5j3j88lgsh319pphqh238d1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.edukid",
+            "certificate_hash": "954e24d06a6c023ede4cfd429b1a6ee2b99bdea9"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBSgrCI_FbJIi2rWZkbMH6MCYtenConDRg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

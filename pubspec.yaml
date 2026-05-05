@@ -15,17 +15,19 @@ dependencies:
   youtube_player_flutter: ^9.0.0
   
   # --- ANIMACIONES ---
-  rive: ^0.14.5 
+  #rive: ^0.14.5 
 
   # --- FIREBASE (Lo que faltaba) ---
   firebase_core: ^3.1.1
   firebase_auth: ^5.1.1
   cloud_firestore: ^5.0.2
+  google_sign_in: ^6.2.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0 # Versión estable para tu SDK
+  font_awesome_flutter: ^10.7.0
 
 # NUEVAS para abecedario
   audioplayers: ^5.2.1         # para reproducir audios
