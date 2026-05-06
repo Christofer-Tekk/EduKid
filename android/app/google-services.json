@@ -20,6 +20,10 @@
             "package_name": "com.example.edukid",
             "certificate_hash": "954e24d06a6c023ede4cfd429b1a6ee2b99bdea9"
           }
+        },
+        {
+          "client_id": "921345349849-bml1n87bu6ed8vc75ccq4tkqmvj8ru95.apps.googleusercontent.com",
+          "client_type": 3
         }
       ],
       "api_key": [
@@ -29,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "921345349849-bml1n87bu6ed8vc75ccq4tkqmvj8ru95.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "921345349849-86rd5jd1k68ms471p7dtp431421ctlng.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.edukid"
+              }
+            }
+          ]
         }
       }
     }

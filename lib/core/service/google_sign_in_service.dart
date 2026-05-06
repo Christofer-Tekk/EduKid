@@ -7,14 +7,16 @@ class GoogleSignInService {
 
   Future<UserCredential?> signInWithGoogle() async {
     try {
-      // Iniciar el flujo de Google Sign In
+      await _googleSignIn.signOut();
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       
       if (googleUser == null) {
-        return null; // Usuario canceló el inicio de sesión
+        print('Usuario canceló el inicio de sesión');
+        return null;
       }
 
-      // Obtener los detalles de autenticación
+      print('Usuario seleccionado: ${googleUser.email}');
+    
       final GoogleSignInAuthentication googleAuth = 
           await googleUser.authentication;
 
