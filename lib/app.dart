@@ -5,6 +5,8 @@ import 'features/home/screens/menu_screen.dart';
 import 'features/abecedario/screens/abecedario_screen.dart';
 import 'features/abecedario/screens/letra_detalle_screen.dart';
 import 'features/abecedario/screens/letra_practica_screen.dart';
+import 'features/pizarra/screens/pizarra_libre_screen.dart';
+import 'features/pizarra/screens/pizarra_guiada_screen.dart';
 
 class EduKidApp extends StatelessWidget {
   const EduKidApp({super.key});
@@ -23,6 +25,8 @@ class EduKidApp extends StatelessWidget {
         '/letras': (context) => const AbecedarioScreen(),
         '/letra_detalle': (context) => const LetraDetalleScreen(),
         '/letra_practica': (context) => const LetraPracticaScreen(),
+        '/pizarra_libre': (context) => const PizarraLibreScreen(),
+        '/pizarra_guiada': (context) => const PizarraGuiadaScreen(),
       },
     );
   }
