@@ -1,214 +1,304 @@
 import 'package:flutter/material.dart';
-
-class PuntoColorido {
-  final Offset? punto;
-  final Color color;
-  PuntoColorido({required this.punto, required this.color});
-}
+import 'dart:math';
 
 class PizarraGuiadaScreen extends StatefulWidget {
-  const PizarraGuiadaScreen({super.key});
+  const PizarraGuiadaScreen({Key? key}) : super(key: key);
 
   @override
   State<PizarraGuiadaScreen> createState() => _PizarraGuiadaScreenState();
 }
 
 class _PizarraGuiadaScreenState extends State<PizarraGuiadaScreen> {
-  List<PuntoColorido> puntos = [];
-  Color colorSeleccionado = Colors.blue;
+  // --- ESTADO ---
+  List<Offset?> _puntos = [];
+  String _letraActual = '';
+  final Random _random = Random();
+  final String _abecedario = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
   
-  final List<String> abecedarioBase = [
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-    'N', 'Ñ', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
-  ];
-  
-  List<String> letrasRestantes = [];
-  String letraActual = '';
-
-  final List<Color> colores = [
-    Colors.blue, Colors.red, Colors.green, Colors.orange, Colors.purple, Colors.black
-  ];
+  // Colores unificados 
+  final Color _colorLetraFondo = Colors.grey.withOpacity(0.3); 
+  final Color _colorTrazado = const Color(0xFFFF6B9D); 
+  final Color _colorBotonConfirmar = const Color(0xFF51CF66); 
+  final Color _colorBotonBorrar = Colors.orange; 
+  final Color _colorBotonVolver = const Color(0xFF339AF0); 
 
   @override
   void initState() {
     super.initState();
-    _iniciarJuego();
+    _cambiarLetraAleatoria();
   }
 
-  void _iniciarJuego() {
-    letrasRestantes = List.from(abecedarioBase);
-    letrasRestantes.shuffle();
-    _siguienteLetra();
-  }
-
-  void _siguienteLetra() {
+  void _cambiarLetraAleatoria() {
     setState(() {
-      if (letrasRestantes.isEmpty) {
-        _iniciarJuego(); // Reinicia si se acaban
-      } else {
-        letraActual = letrasRestantes.removeLast();
-        puntos.clear();
-      }
+      _puntos.clear();
+      _letraActual = _abecedario[_random.nextInt(_abecedario.length)];
     });
   }
 
-  // --- NUEVA LÓGICA DE VERIFICACIÓN ---
-  void _verificarTrazo() {
-    // 1. Filtramos los puntos reales (ignoramos los saltos del dedo)
-    final puntosReales = puntos.where((p) => p.punto != null).map((p) => p.punto!).toList();
+  void _limpiarPizarra() {
+    setState(() {
+      _puntos.clear();
+    });
+  }
 
-    // 2. Si no dibujó casi nada
-    if (puntosReales.length < 20) {
-      _mostrarMensaje("✏️ Dibuja un poco más para poder verificar.", Colors.orange);
-      return;
-    }
+  // --- LÓGICA DE VALIDACIÓN ---
+  void _onVerificar() {
+    double cobertura = _calcularCobertura();
+    const double umbralDificultad = 0.25;
 
-    // 3. Calculamos el área que ocupa el dibujo (para ver si no es solo un puntito)
-    double minX = puntosReales.first.dx;
-    double maxX = puntosReales.first.dx;
-    double minY = puntosReales.first.dy;
-    double maxY = puntosReales.first.dy;
-
-    for (var p in puntosReales) {
-      if (p.dx < minX) minX = p.dx;
-      if (p.dx > maxX) maxX = p.dx;
-      if (p.dy < minY) minY = p.dy;
-      if (p.dy > maxY) maxY = p.dy;
-    }
-
-    double anchoDibujo = maxX - minX;
-    double altoDibujo = maxY - minY;
-
-    // 4. Condición: Un trazo normal de letra ocupa al menos unos 60x60 píxeles de área
-    if (anchoDibujo > 60 && altoDibujo > 60) {
-      _mostrarMensaje("🌟 ¡Excelente! Has trazado la letra muy bien.", Colors.green);
+    if (cobertura >= umbralDificultad) {
+      _mostarDialogoAcierto();
     } else {
-      _mostrarMensaje("🤔 Mmm... parece muy pequeño. ¡Sigue las líneas de la letra!", Colors.redAccent);
+      _mostrarDialogoFallo();
     }
   }
 
-  void _mostrarMensaje(String texto, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(texto, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        backgroundColor: color,
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating, // Hace que se vea como una burbuja flotante
-      )
+  double _calcularCobertura() {
+    if (_puntos.isEmpty || _puntos.where((p) => p != null).length < 20) return 0.0;
+
+    final trazosValidos = _puntos.where((p) => p != null).toList();
+    double minX = double.infinity, maxX = double.negativeInfinity;
+    double minY = double.infinity, maxY = double.negativeInfinity;
+
+    for (var punto in trazosValidos) {
+      minX = min(minX, punto!.dx);
+      maxX = max(maxX, punto.dx);
+      minY = min(minY, punto.dy);
+      maxY = max(maxY, punto.dy);
+    }
+
+    final pizarraRect = Rect.fromLTRB(minX, minY, maxX, maxY);
+    final anchoPizarra = pizarraRect.width;
+    final altoPizarra = pizarraRect.height;
+
+    final anchoZona = anchoPizarra * 0.35;
+    final altoZona = altoPizarra * 0.35;
+
+    final zonas = [
+      Rect.fromLTWH(pizarraRect.left, pizarraRect.top, anchoZona, altoZona),
+      Rect.fromLTWH(pizarraRect.right - anchoZona, pizarraRect.top, anchoZona, altoZona),
+      Rect.fromLTWH(pizarraRect.left, pizarraRect.bottom - altoZona, anchoZona, altoZona),
+      Rect.fromLTWH(pizarraRect.right - anchoZona, pizarraRect.bottom - altoZona, anchoZona, altoZona),
+      Rect.fromCenter(center: pizarraRect.center, width: anchoPizarra * 0.40, height: altoPizarra * 0.40),
+    ];
+
+    int zonasCubiertas = 0;
+    const int puntosMinimosPorZona = 15;
+
+    for (var zona in zonas) {
+      int puntosEnZona = 0;
+      for (var punto in trazosValidos) {
+        if (zona.contains(punto!)) {
+          puntosEnZona++;
+        }
+      }
+      if (puntosEnZona >= puntosMinimosPorZona) {
+        zonasCubiertas++;
+      }
+    }
+
+    return zonasCubiertas / zonas.length;
+  }
+
+  // --- DIÁLOGOS ---
+  void _mostarDialogoAcierto() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, 
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), 
+          backgroundColor: Colors.white,
+          title: const Text('¡Excelente! 🎉', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 24), textAlign: TextAlign.center,),
+          content: const Text('Has trazado la letra muy bien.', style: TextStyle(color: Colors.black87, fontSize: 18), textAlign: TextAlign.center,),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _colorBotonVolver,
+                shape: const StadiumBorder(),
+                elevation: 5,
+              ),
+              child: const Text('Continuar →', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              onPressed: () {
+                Navigator.of(context).pop(); 
+                _cambiarLetraAleatoria(); 
+              },
+            ),
+          ],
+        );
+      },
     );
   }
-  // ------------------------------------
 
+  void _mostrarDialogoFallo() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: Colors.white,
+          title: const Text('Revisa tu trazo 💪', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 22), textAlign: TextAlign.center,),
+          content: const Text('Asegúrate de cubrir toda la letra con el dedo para verificar.', style: TextStyle(color: Colors.black87, fontSize: 16), textAlign: TextAlign.center,),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _colorBotonBorrar,
+                shape: const StadiumBorder(),
+                elevation: 5,
+              ),
+              child: const Text('Reintentar', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _limpiarPizarra(); 
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // --- WIDGET BUILD ---
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        foregroundColor: Colors.black,
-        title: Text('Traza la letra $letraActual', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-        actions: [
-          // Botón BORRAR
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.grey),
-            tooltip: 'Borrar dibujo',
-            onPressed: () => setState(() => puntos.clear()),
-          ),
-          // NUEVO: Botón VERIFICAR
-          IconButton(
-            icon: const Icon(Icons.check_circle, color: Colors.green, size: 28),
-            tooltip: 'Verificar trazo',
-            onPressed: _verificarTrazo,
-          ),
-          // Botón SIGUIENTE
-          TextButton.icon(
-            icon: const Icon(Icons.arrow_forward_ios, size: 16),
-            label: const Text("Siguiente", style: TextStyle(fontSize: 14)),
-            onPressed: _siguienteLetra,
-          ),
-        ],
-      ),
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            child: GestureDetector(
-              onPanUpdate: (details) {
-                setState(() {
-                  puntos.add(PuntoColorido(punto: details.localPosition, color: colorSeleccionado));
-                });
-              },
-              onPanEnd: (details) {
-                setState(() {
-                  puntos.add(PuntoColorido(punto: null, color: colorSeleccionado));
-                });
-              },
-              child: CustomPaint(
-                foregroundPainter: PizarraGuiadaPainter(puntos: puntos),
-                size: Size.infinite,
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(40.0),
-                    child: Opacity(
-                      opacity: 0.3, 
-                      child: Image.asset(
-                        // Apuntamos a la carpeta abecedario y en minúsculas como acordamos
-                        'assets/images/abecedario/${letraActual.toLowerCase()}.png',
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
-                ),
+          // 0. EL FONDO DE PIZARRA TOTAL 
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/fondo/fondo_pizarra.png',
+              fit: BoxFit.fill,
+            ),
+          ),
+
+          // 1. La Letra de Guía 
+          Center(
+            child: Text(
+              _letraActual,
+              style: TextStyle(
+                fontSize: 350, 
+                fontWeight: FontWeight.bold,
+                color: _colorLetraFondo, 
               ),
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 20.0),
-            color: Colors.grey[100],
+          
+          // 2. El Lienzo de Dibujo
+          GestureDetector(
+            onPanUpdate: (details) {
+              setState(() {
+                RenderBox object = context.findRenderObject() as RenderBox;
+                _puntos.add(object.globalToLocal(details.globalPosition));
+              });
+            },
+            onPanEnd: (details) {
+              _puntos.add(null); 
+            },
+            child: CustomPaint(
+              painter: _LinePainter(_puntos, _colorTrazado),
+              size: Size.infinite,
+            ),
+          ),
+          
+          // 3. BARRA SUPERIOR PERSONALIZADA 
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 10, 
+            left: 10,
+            right: 10,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Botón "PRACTICA" 
+                ElevatedButton(
+                  onPressed: () {}, 
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange, 
+                    shape: const StadiumBorder(),
+                    elevation: 5,
+                  ),
+                  child: const Text('PRACTICA', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+                
+                // Botón "VOLVER" 
+                ElevatedButton.icon(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.arrow_back, color: Colors.white, size: 18),
+                  label: const Text('VOLVER', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _colorBotonVolver, 
+                    shape: const StadiumBorder(),
+                    elevation: 5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // 4. Los Botones Inferiores
+          Positioned(
+            bottom: 30,
+            left: 20,
+            right: 20,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: colores.map((color) {
-                return GestureDetector(
-                  onTap: () => setState(() => colorSeleccionado = color),
-                  child: Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: colorSeleccionado == color ? Colors.black : Colors.transparent,
-                        width: 3,
-                      ),
-                    ),
+              children: [
+                ElevatedButton.icon(
+                  onPressed: _limpiarPizarra,
+                  icon: const Icon(Icons.delete, color: Colors.white),
+                  label: const Text('BORRAR', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _colorBotonBorrar,
+                    shape: const StadiumBorder(),
+                    padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                    elevation: 5,
                   ),
-                );
-              }).toList(),
+                ),
+                
+                ElevatedButton.icon(
+                  onPressed: _onVerificar,
+                  icon: const Icon(Icons.check, color: Colors.white),
+                  label: const Text('VERIFICAR', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _colorBotonConfirmar,
+                    shape: const StadiumBorder(),
+                    padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                    elevation: 5,
+                  ),
+                ),
+              ],
             ),
-          )
+          ),
         ],
       ),
     );
   }
 }
 
-class PizarraGuiadaPainter extends CustomPainter {
-  final List<PuntoColorido> puntos;
-  PizarraGuiadaPainter({required this.puntos});
+class _LinePainter extends CustomPainter {
+  final List<Offset?> points;
+  final Color traceColor;
+
+  _LinePainter(this.points, this.traceColor);
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (int i = 0; i < puntos.length - 1; i++) {
-      if (puntos[i].punto != null && puntos[i + 1].punto != null) {
-        Paint pintura = Paint()
-          ..color = puntos[i].color
-          ..strokeCap = StrokeCap.round
-          ..strokeWidth = 25.0;
+    Paint paint = Paint()
+      ..color = traceColor
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 20.0 
+      ..isAntiAlias = true;
 
-        canvas.drawLine(puntos[i].punto!, puntos[i + 1].punto!, pintura);
+    for (int i = 0; i < points.length - 1; i++) {
+      if (points[i] != null && points[i + 1] != null) {
+        canvas.drawLine(points[i]!, points[i + 1]!, paint);
       }
     }
   }
+
   @override
-  bool shouldRepaint(PizarraGuiadaPainter oldDelegate) => true;
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
 }
