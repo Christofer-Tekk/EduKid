@@ -1,5 +1,8 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
-import 'dart:ui'; 
+
+import '../../../core/constants/colores_app.dart';
 
 class PizarraLibreScreen extends StatefulWidget {
   const PizarraLibreScreen({Key? key}) : super(key: key);
@@ -11,12 +14,12 @@ class PizarraLibreScreen extends StatefulWidget {
 class DrawingPoint {
   final Offset point;
   final Paint paint;
+
   DrawingPoint({required this.point, required this.paint});
 }
 
 class _PizarraLibreScreenState extends State<PizarraLibreScreen> {
-  // --- ESTADO DE LA PIZARRA ---
-  List<DrawingPoint?> _puntos = [];
+  final List<DrawingPoint?> _puntos = [];
   Color _colorActual = Colors.black;
   final double _grosorActual = 8.0;
   bool _modoBorrador = false;
@@ -33,6 +36,29 @@ class _PizarraLibreScreenState extends State<PizarraLibreScreen> {
     Colors.brown,
   ];
 
+  Paint _crearPaint() {
+    return Paint()
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..isAntiAlias = true
+      ..color = _modoBorrador ? Colors.transparent : _colorActual
+      ..strokeWidth = _modoBorrador ? 30.0 : _grosorActual
+      ..blendMode = _modoBorrador ? BlendMode.clear : BlendMode.srcOver;
+  }
+
+  void _agregarPunto(Offset punto) {
+    setState(() {
+      _mostrarPaleta = false;
+      _puntos.add(DrawingPoint(point: punto, paint: _crearPaint()));
+    });
+  }
+
+  void _cerrarTrazo() {
+    if (_puntos.isNotEmpty && _puntos.last != null) {
+      setState(() => _puntos.add(null));
+    }
+  }
+
   void _seleccionarColor(Color color) {
     setState(() {
       _colorActual = color;
@@ -45,217 +71,311 @@ class _PizarraLibreScreenState extends State<PizarraLibreScreen> {
     setState(() {
       _puntos.clear();
       _mostrarPaleta = false;
+      _modoBorrador = false;
     });
+  }
+
+  Future<void> _confirmarLimpiarPizarra() async {
+    if (_puntos.isEmpty) return;
+
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          backgroundColor: Colors.white,
+          title: const Text(
+            '¿Borrar dibujo?',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: ColoresApp.rojoVibrante,
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          content: const Text(
+            'Se limpiará toda la pizarra.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.black87,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text(
+                'Cancelar',
+                style: TextStyle(
+                  color: ColoresApp.azulMarino,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColoresApp.rojoVibrante,
+                shape: const StadiumBorder(),
+                elevation: 4,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              ),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text(
+                'Borrar',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted || confirmar != true) return;
+    _limpiarPizarra();
   }
 
   @override
   Widget build(BuildContext context) {
+    final bottomSafe = MediaQuery.of(context).padding.bottom;
+
     return Scaffold(
-      body: Stack(
-        children: [
-          // 1. EL FONDO DE PIZARRA TOTAL
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/fondo/fondo_pizarra.png',
-              fit: BoxFit.fill,
-            ),
-          ),
-
-          // 2. LIENZO DE DIBUJO LIBRE
-          GestureDetector(
-            onPanStart: (details) {
-              setState(() {
-                _mostrarPaleta = false; 
-                RenderBox renderBox = context.findRenderObject() as RenderBox;
-                _puntos.add(
-                  DrawingPoint(
-                    point: renderBox.globalToLocal(details.globalPosition),
-                    paint: Paint()
-                      ..strokeCap = StrokeCap.round
-                      ..isAntiAlias = true
-                      ..color = _modoBorrador ? Colors.transparent : _colorActual
-                      ..strokeWidth = _modoBorrador ? 30.0 : _grosorActual 
-                      ..blendMode = _modoBorrador ? BlendMode.clear : BlendMode.srcOver,
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
+              child: Row(
+                children: [
+                  _BotonSuperior(
+                    texto: 'VOLVER',
+                    icono: Icons.arrow_back,
+                    color: ColoresApp.azulLogo,
+                    onPressed: () => Navigator.of(context).pop(),
                   ),
-                );
-              });
-            },
-            onPanUpdate: (details) {
-              setState(() {
-                RenderBox renderBox = context.findRenderObject() as RenderBox;
-                _puntos.add(
-                  DrawingPoint(
-                    point: renderBox.globalToLocal(details.globalPosition),
-                    paint: Paint()
-                      ..strokeCap = StrokeCap.round
-                      ..isAntiAlias = true
-                      ..color = _modoBorrador ? Colors.transparent : _colorActual
-                      ..strokeWidth = _modoBorrador ? 30.0 : _grosorActual
-                      ..blendMode = _modoBorrador ? BlendMode.clear : BlendMode.srcOver,
-                  ),
-                );
-              });
-            },
-            onPanEnd: (details) {
-              setState(() {
-                _puntos.add(null); 
-              });
-            },
-            child: CustomPaint(
-              painter: _LibrePainter(_puntos),
-              size: Size.infinite,
-            ),
-          ),
-
-          // 3. BARRA SUPERIOR PERSONALIZADA (Corregida: Sin Overflow y Sin Congelamiento)
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 10,
-            left: 5, 
-            right: 5,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Botón "VOLVER"
-                ElevatedButton.icon(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.arrow_back, color: Colors.white, size: 16),
-                  label: const Text('VOLVER', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF339AF0),
-                    shape: const StadiumBorder(),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                  ),
-                ),
-                
-                // Título Decorado "PIZARRA"
-                const Expanded(
-                  child: Center(
+                  const Expanded(
                     child: Text(
-                      'PIZARRA',
+                      'PIZARRA LIBRE',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Color(0xFFD6336C), 
-                        fontSize: 20, 
+                        color: ColoresApp.magentaLogo,
+                        fontSize: 20,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: 1,
-                        shadows: [
-                          Shadow(color: Colors.white, blurRadius: 0, offset: Offset(2, 2)),
-                          Shadow(color: Colors.white, blurRadius: 10)
-                        ],
+                        letterSpacing: 0.8,
                       ),
                     ),
                   ),
-                ),
-                
-                // Botón "PRACTICAR" 
-                ElevatedButton.icon(
-                  onPressed: () => Navigator.pushReplacementNamed(context, '/pizarra_guiada'),
-                  icon: const Icon(Icons.school, color: Colors.white, size: 16),
-                  label: const Text('PRACTICA', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF51CF66),
-                    shape: const StadiumBorder(),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // 4. MINI-PALETA DE COLORES
-          if (_mostrarPaleta)
-            Positioned(
-              bottom: 90,
-              left: 30,
-              right: 30,
-              child: Container(
-                padding: const EdgeInsets.all(15),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.95),
-                  borderRadius: BorderRadius.circular(25),
-                  boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 5))],
-                ),
-                child: Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 15,
-                  runSpacing: 10,
-                  children: _colores.map((c) => GestureDetector(
-                    onTap: () => _seleccionarColor(c),
-                    child: CircleAvatar(
-                      backgroundColor: c,
-                      radius: 20,
-                      child: _colorActual == c && !_modoBorrador
-                          ? const Icon(Icons.check, color: Colors.white, size: 24)
-                          : null,
-                    ),
-                  )).toList(),
-                ),
-              ),
-            ),
-
-          // 5. BARRA DE HERRAMIENTAS INFERIOR
-          Positioned(
-            bottom: 20,
-            left: 20,
-            right: 20,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
-                borderRadius: BorderRadius.circular(35),
-                boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10)],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _BotonHerramienta(
-                    icono: Icons.edit,
-                    colorFondo: const Color(0xFFFF6B9D),
-                    estaSeleccionado: !_modoBorrador && !_mostrarPaleta,
-                    alPresionar: () {
-                      setState(() {
-                        _modoBorrador = false;
-                        _mostrarPaleta = false;
-                      });
-                    },
-                  ),
-                  _BotonHerramienta(
-                    icono: Icons.palette,
-                    colorFondo: const Color(0xFF339AF0),
-                    estaSeleccionado: _mostrarPaleta,
-                    alPresionar: () {
-                      setState(() {
-                        _mostrarPaleta = !_mostrarPaleta;
-                      });
-                    },
-                  ),
-                  _BotonHerramienta(
-                    icono: Icons.cleaning_services_rounded,
-                    colorFondo: Colors.orange,
-                    estaSeleccionado: _modoBorrador,
-                    alPresionar: () {
-                      setState(() {
-                        _modoBorrador = true;
-                        _mostrarPaleta = false;
-                      });
-                    },
-                  ),
-                  _BotonHerramienta(
-                    icono: Icons.delete_forever,
-                    colorFondo: const Color(0xFFD6336C),
-                    estaSeleccionado: false, 
-                    alPresionar: _limpiarPizarra,
+                  _BotonSuperior(
+                    texto: 'PRACTICA',
+                    icono: Icons.school,
+                    color: ColoresApp.completado,
+                    onPressed: () => Navigator.pushNamed(context, '/pizarra_guiada'),
                   ),
                 ],
               ),
             ),
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                margin: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFFE0E0E0), width: 2),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(22),
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onPanStart: (details) => _agregarPunto(details.localPosition),
+                    onPanUpdate: (details) => _agregarPunto(details.localPosition),
+                    onPanEnd: (_) => _cerrarTrazo(),
+                    onPanCancel: _cerrarTrazo,
+                    child: CustomPaint(
+                      painter: _LibrePainter(_puntos),
+                      child: const SizedBox.expand(),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            if (_mostrarPaleta)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 10, 24, 0),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: const Color(0xFFE0E0E0), width: 1.5),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 14,
+                    runSpacing: 10,
+                    children: _colores.map((color) {
+                      final seleccionado = _colorActual == color && !_modoBorrador;
+                      return GestureDetector(
+                        onTap: () => _seleccionarColor(color),
+                        child: CircleAvatar(
+                          backgroundColor: color,
+                          radius: 20,
+                          child: seleccionado
+                              ? const Icon(Icons.check, color: Colors.white, size: 24)
+                              : null,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(20, 12, 20, bottomSafe > 0 ? 10 : 16),
+              child: _BarraHerramientas(
+                modoBorrador: _modoBorrador,
+                mostrarPaleta: _mostrarPaleta,
+                onLapiz: () {
+                  setState(() {
+                    _modoBorrador = false;
+                    _mostrarPaleta = false;
+                  });
+                },
+                onPaleta: () {
+                  setState(() {
+                    _modoBorrador = false;
+                    _mostrarPaleta = !_mostrarPaleta;
+                  });
+                },
+                onBorrador: () {
+                  setState(() {
+                    _modoBorrador = true;
+                    _mostrarPaleta = false;
+                  });
+                },
+                onLimpiar: _confirmarLimpiarPizarra,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BotonSuperior extends StatelessWidget {
+  final String texto;
+  final IconData icono;
+  final Color color;
+  final VoidCallback onPressed;
+
+  const _BotonSuperior({
+    required this.texto,
+    required this.icono,
+    required this.color,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icono, color: Colors.white, size: 16),
+      label: Text(
+        texto,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        shape: const StadiumBorder(),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        elevation: 4,
+      ),
+    );
+  }
+}
+
+class _BarraHerramientas extends StatelessWidget {
+  final bool modoBorrador;
+  final bool mostrarPaleta;
+  final VoidCallback onLapiz;
+  final VoidCallback onPaleta;
+  final VoidCallback onBorrador;
+  final VoidCallback onLimpiar;
+
+  const _BarraHerramientas({
+    required this.modoBorrador,
+    required this.mostrarPaleta,
+    required this.onLapiz,
+    required this.onPaleta,
+    required this.onBorrador,
+    required this.onLimpiar,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.96),
+        borderRadius: BorderRadius.circular(34),
+        border: Border.all(color: const Color(0xFFE0E0E0), width: 1.5),
+        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10)],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _BotonHerramienta(
+            icono: Icons.edit,
+            colorFondo: ColoresApp.magentaLogo,
+            estaSeleccionado: !modoBorrador && !mostrarPaleta,
+            alPresionar: onLapiz,
+          ),
+          _BotonHerramienta(
+            icono: Icons.palette,
+            colorFondo: ColoresApp.azulLogo,
+            estaSeleccionado: mostrarPaleta,
+            alPresionar: onPaleta,
+          ),
+          _BotonHerramienta(
+            icono: Icons.cleaning_services_rounded,
+            colorFondo: ColoresApp.naranjaVibrante,
+            estaSeleccionado: modoBorrador,
+            alPresionar: onBorrador,
+          ),
+          _BotonHerramienta(
+            icono: Icons.delete_forever,
+            colorFondo: ColoresApp.rojoVibrante,
+            estaSeleccionado: false,
+            alPresionar: onLimpiar,
           ),
         ],
       ),
     );
   }
 }
-
-// --- COMPONENTES VISUALES ---
 
 class _BotonHerramienta extends StatelessWidget {
   final IconData icono;
@@ -275,15 +395,26 @@ class _BotonHerramienta extends StatelessWidget {
     return GestureDetector(
       onTap: alPresionar,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: estaSeleccionado ? colorFondo : colorFondo.withOpacity(0.5),
+          color: estaSeleccionado ? colorFondo : colorFondo.withOpacity(0.62),
           shape: BoxShape.circle,
-          border: estaSeleccionado ? Border.all(color: Colors.black87, width: 2) : null,
-          boxShadow: estaSeleccionado ? const [BoxShadow(color: Colors.black45, blurRadius: 8, offset: Offset(0, 3))] : null,
+          border: Border.all(
+            color: estaSeleccionado ? Colors.black87 : Colors.white,
+            width: estaSeleccionado ? 2.2 : 1.5,
+          ),
+          boxShadow: estaSeleccionado
+              ? const [
+                  BoxShadow(
+                    color: Colors.black38,
+                    blurRadius: 8,
+                    offset: Offset(0, 3),
+                  ),
+                ]
+              : null,
         ),
-        child: Icon(icono, color: Colors.white, size: 30),
+        child: Icon(icono, color: Colors.white, size: 28),
       ),
     );
   }
@@ -291,6 +422,7 @@ class _BotonHerramienta extends StatelessWidget {
 
 class _LibrePainter extends CustomPainter {
   final List<DrawingPoint?> points;
+
   _LibrePainter(this.points);
 
   @override

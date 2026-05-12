@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../core/widgets/background_wrapper.dart';
 import '../../../core/widgets/boton_accion.dart';
 import '../../../core/widgets/app_texto.dart';
+import '../../../core/constants/colores_app.dart';
 import '../../../data/models/letra_model.dart';
 import '../../../data/services/progreso_service.dart';
 
@@ -165,7 +166,7 @@ class _LetraPracticaScreenState extends State<LetraPracticaScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  AppTexto.titulo('Practica'),
+                  const _TextoPracticaCard.titulo('Practica'),
                   BotonAccion(
                     texto: 'VOLVER',
                     icono: Icons.arrow_back,
@@ -188,7 +189,7 @@ class _LetraPracticaScreenState extends State<LetraPracticaScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            AppTexto.subtitulo('Traza la letra  $_letraActual', textAlign: TextAlign.center),
+            _TextoPracticaCard.subtitulo('Traza la letra  $_letraActual'),
             const SizedBox(height: 12),
             Expanded(
               child: Center(
@@ -209,6 +210,52 @@ class _LetraPracticaScreenState extends State<LetraPracticaScreen> {
             const SizedBox(height: 20),
           ],
         ),
+      ),
+    );
+  }
+}
+
+
+class _TextoPracticaCard extends StatelessWidget {
+  final String texto;
+  final bool esTitulo;
+
+  const _TextoPracticaCard.titulo(this.texto) : esTitulo = true;
+  const _TextoPracticaCard.subtitulo(this.texto) : esTitulo = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: esTitulo ? Alignment.centerLeft : Alignment.center,
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: esTitulo ? 18 : 16,
+          vertical: esTitulo ? 7 : 6,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.86),
+          borderRadius: BorderRadius.circular(esTitulo ? 20 : 18),
+          border: Border.all(color: Colors.white, width: 2),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 8,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: esTitulo
+            ? AppTexto.titulo(
+                texto,
+                color: const Color(0xFFD90429),
+                shadows: SombrasApp.blanca,
+              )
+            : AppTexto.subtitulo(
+                texto,
+                textAlign: TextAlign.center,
+                color: const Color(0xFF0D3B66),
+                shadows: SombrasApp.blanca,
+              ),
       ),
     );
   }

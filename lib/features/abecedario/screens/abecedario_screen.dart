@@ -2,10 +2,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/colores_app.dart';
 import '../../../core/widgets/background_wrapper.dart';
 import '../../../core/widgets/boton_accion.dart';
 import '../../../core/widgets/estado_item.dart';
-import '../../../core/widgets/app_texto.dart';
 import '../controllers/abecedario_controller.dart';
 
 class AbecedarioScreen extends StatelessWidget {
@@ -16,17 +18,22 @@ class AbecedarioScreen extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => AbecedarioController(),
       child: BackgroundWrapper(
-        assetPath: 'assets/images/fondo/fondo_abecedario.png',
+        assetPath: AppFondos.abecedario,
         child: SafeArea(
           child: Column(
             children: [
-              // HEADER
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const AppTexto.titulo('Abecedario'),
+                    const Flexible(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: _TituloAbecedarioCard(texto: 'Abecedario'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
                     BotonAccion(
                       texto: 'VOLVER',
                       icono: Icons.arrow_back,
@@ -38,17 +45,15 @@ class AbecedarioScreen extends StatelessWidget {
                 ),
               ),
 
-              // Progreso
               Consumer<AbecedarioController>(
                 builder: (context, controller, _) => Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: AppTexto.subtitulo(
-                    '${controller.letrasCompletadas}/27 completadas ⭐',
+                  child: _ProgresoCard(
+                    texto: '${controller.letrasCompletadas}/27 completadas ⭐',
                   ),
                 ),
               ),
 
-              // GRID de letras
               Expanded(
                 child: Consumer<AbecedarioController>(
                   builder: (context, controller, _) {
@@ -72,7 +77,6 @@ class AbecedarioScreen extends StatelessWidget {
                               '/letra_detalle',
                               arguments: letra,
                             );
-                            // Al volver recarga el progreso
                             controller.cargarLetras();
                           },
                         );
@@ -100,5 +104,80 @@ class AbecedarioScreen extends StatelessWidget {
       const Color(0xFFFF6B9D),
     ];
     return colores[index % colores.length];
+  }
+}
+
+class _TituloAbecedarioCard extends StatelessWidget {
+  final String texto;
+
+  const _TituloAbecedarioCard({required this.texto});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.88),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white, width: 2.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          texto,
+          style: const TextStyle(
+            color: ColoresApp.morado,
+            fontSize: 27,
+            fontWeight: FontWeight.w900,
+            shadows: SombrasApp.blanca,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProgresoCard extends StatelessWidget {
+  final String texto;
+
+  const _ProgresoCard({required this.texto});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.center,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.86),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: Colors.white, width: 2),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 8,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Text(
+          texto,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: ColoresApp.azulMedio,
+            fontSize: 17,
+            fontWeight: FontWeight.w900,
+            shadows: SombrasApp.blanca,
+          ),
+        ),
+      ),
+    );
   }
 }

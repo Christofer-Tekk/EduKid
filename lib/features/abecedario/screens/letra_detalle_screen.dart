@@ -1,8 +1,10 @@
 // lib/features/abecedario/screens/letra_detalle_screen.dart
 
 import 'package:flutter/material.dart';
-// 1. Cambiamos la importación de webview por youtube_player
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+
+import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/colores_app.dart';
 import '../../../core/widgets/background_wrapper.dart';
 import '../../../core/widgets/boton_accion.dart';
 import '../../../core/widgets/app_texto.dart';
@@ -17,25 +19,21 @@ class LetraDetalleScreen extends StatefulWidget {
 }
 
 class _LetraDetalleScreenState extends State<LetraDetalleScreen> {
-  // 2. Usamos el controlador oficial de YouTube
   YoutubePlayerController? _ytController;
   bool _inicializado = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    
-    // Inicializamos el controlador solo una vez al entrar
+
     if (!_inicializado) {
       final letra = ModalRoute.of(context)?.settings.arguments as LetraModel;
-      
-      // Convertimos la URL de YouTube a un ID de video automáticamente
       final String? videoId = YoutubePlayer.convertUrlToId(letra.urlYoutube);
 
       _ytController = YoutubePlayerController(
         initialVideoId: videoId ?? '',
         flags: const YoutubePlayerFlags(
-          autoPlay: false, // El video no empieza solo para no asustar al niño
+          autoPlay: false,
           mute: false,
           disableDragSeek: false,
           loop: false,
@@ -50,7 +48,6 @@ class _LetraDetalleScreenState extends State<LetraDetalleScreen> {
 
   @override
   void dispose() {
-    // 3. ¡MUY IMPORTANTE! Liberar el controlador al salir para evitar errores de memoria
     _ytController?.dispose();
     super.dispose();
   }
@@ -60,17 +57,22 @@ class _LetraDetalleScreenState extends State<LetraDetalleScreen> {
     final letra = ModalRoute.of(context)?.settings.arguments as LetraModel;
 
     return BackgroundWrapper(
-      assetPath: 'assets/images/fondo/fondo_abecedario.png',
+      assetPath: AppFondos.abecedario,
       child: SafeArea(
         child: Column(
           children: [
-            // HEADER
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  AppTexto.titulo('${letra.letraMayuscula}  ${letra.palabraEjemplo}'),
+                  Flexible(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: _TituloLetraCard(letra: letra),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   BotonAccion(
                     texto: 'VOLVER',
                     icono: Icons.arrow_back,
@@ -87,41 +89,10 @@ class _LetraDetalleScreenState extends State<LetraDetalleScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   children: [
-                    // ── LETRAS MAYÚSCULA Y MINÚSCULA ──
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          letra.letraMayuscula,
-                          style: const TextStyle(
-                            fontSize: 90,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFFFF0000),
-                            shadows: [
-                              Shadow(color: Colors.black87, blurRadius: 0, offset: Offset(3, 3)),
-                              Shadow(color: Colors.black45, blurRadius: 10),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 24),
-                        Text(
-                          letra.letraMinuscula,
-                          style: const TextStyle(
-                            fontSize: 90,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            shadows: [
-                              Shadow(color: Colors.black87, blurRadius: 0, offset: Offset(3, 3)),
-                              Shadow(color: Colors.black45, blurRadius: 10),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                    _LetrasCard(letra: letra),
 
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
 
-                    // ── IMAGEN GRANDE ──
                     Container(
                       width: double.infinity,
                       height: 220,
@@ -129,7 +100,11 @@ class _LetraDetalleScreenState extends State<LetraDetalleScreen> {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: const [
-                          BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 10,
+                            offset: Offset(0, 4),
+                          ),
                         ],
                       ),
                       child: ClipRRect(
@@ -143,7 +118,6 @@ class _LetraDetalleScreenState extends State<LetraDetalleScreen> {
 
                     const SizedBox(height: 16),
 
-                    // ── BOTÓN AUDIO ──
                     _BotonGrande(
                       texto: '🔊  ESCUCHAR',
                       color: const Color(0xFF51CF66),
@@ -153,8 +127,7 @@ class _LetraDetalleScreenState extends State<LetraDetalleScreen> {
 
                     const SizedBox(height: 16),
 
-                    // ── VIDEO YOUTUBE ──
-                    const AppTexto.subtitulo('🎬  Video'),
+                    const _SeccionCard(texto: '🎬  Video'),
                     const SizedBox(height: 8),
                     Container(
                       height: 200,
@@ -167,24 +140,22 @@ class _LetraDetalleScreenState extends State<LetraDetalleScreen> {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(13),
-                        // 4. Reemplazamos WebViewWidget por YoutubePlayer
-                        child: _ytController != null 
-                          ? YoutubePlayer(
-                              controller: _ytController!,
-                              showVideoProgressIndicator: true,
-                              progressIndicatorColor: Colors.red,
-                              progressColors: const ProgressBarColors(
-                                playedColor: Colors.red,
-                                handleColor: Colors.redAccent,
-                              ),
-                            )
-                          : const Center(child: CircularProgressIndicator()),
+                        child: _ytController != null
+                            ? YoutubePlayer(
+                                controller: _ytController!,
+                                showVideoProgressIndicator: true,
+                                progressIndicatorColor: Colors.red,
+                                progressColors: const ProgressBarColors(
+                                  playedColor: Colors.red,
+                                  handleColor: Colors.redAccent,
+                                ),
+                              )
+                            : const Center(child: CircularProgressIndicator()),
                       ),
                     ),
 
                     const SizedBox(height: 24),
 
-                    // ── BOTÓN PRACTICAR ──
                     _BotonGrande(
                       texto: '✏️  PRACTICAR',
                       color: const Color(0xFF339AF0),
@@ -210,7 +181,140 @@ class _LetraDetalleScreenState extends State<LetraDetalleScreen> {
   }
 }
 
-// Botón grande reutilizable dentro de esta pantalla
+class _TituloLetraCard extends StatelessWidget {
+  final LetraModel letra;
+
+  const _TituloLetraCard({required this.letra});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 9),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.88),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white, width: 2.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          '${letra.letraMayuscula}  ${letra.palabraEjemplo}',
+          maxLines: 1,
+          style: const TextStyle(
+            color: ColoresApp.rojo,
+            fontSize: 27,
+            fontWeight: FontWeight.w900,
+            shadows: SombrasApp.blanca,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LetrasCard extends StatelessWidget {
+  final LetraModel letra;
+
+  const _LetrasCard({required this.letra});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.center,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 34, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.90),
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: Colors.white, width: 3),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 12,
+              offset: Offset(0, 5),
+            ),
+          ],
+        ),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                letra.letraMayuscula,
+                style: const TextStyle(
+                  fontSize: 78,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFFFF0000),
+                  shadows: [
+                    Shadow(color: Colors.white, blurRadius: 0, offset: Offset(3, 3)),
+                    Shadow(color: Colors.black38, blurRadius: 8, offset: Offset(2, 2)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 26),
+              Text(
+                letra.letraMinuscula,
+                style: const TextStyle(
+                  fontSize: 78,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black87,
+                  shadows: [
+                    Shadow(color: Colors.white, blurRadius: 0, offset: Offset(3, 3)),
+                    Shadow(color: Colors.black26, blurRadius: 8, offset: Offset(2, 2)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SeccionCard extends StatelessWidget {
+  final String texto;
+
+  const _SeccionCard({required this.texto});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.center,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.86),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white, width: 2),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 8,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: AppTexto.subtitulo(
+          texto,
+          textAlign: TextAlign.center,
+          color: ColoresApp.azulMedio,
+          shadows: SombrasApp.blanca,
+        ),
+      ),
+    );
+  }
+}
+
 class _BotonGrande extends StatefulWidget {
   final String texto;
   final Color color;

@@ -6,4 +6,5 @@ class AppFondos {
   static const String colores    = "assets/images/fondo/fondo_colores.png";
   static const String animales    = "assets/images/fondo/fondo_animales.png";
   static const String formas    = "assets/images/fondo/fondo_formas.png";
+  static const String pizarra    = "assets/images/fondo/fondo_pizarra.png";
 }

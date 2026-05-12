@@ -22,10 +22,30 @@ class MenuScreen extends StatelessWidget {
             _buildHeader(context, user),
             const SizedBox(height: 4),
 
-            // Título visible con estilo app
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: AppTexto.titulo('¿Qué quieres aprender?'),
+            // Solo se mejoró la legibilidad del título.
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.88),
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.14),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const AppTexto.titulo(
+                  '¿Qué quieres aprender?',
+                  textAlign: TextAlign.center,
+                  fontSize: 27,
+                ),
+              ),
             ),
 
             const SizedBox(height: 8),
@@ -120,6 +140,7 @@ class MenuScreen extends StatelessWidget {
             colorSombra: const Color(0xFFC0392B),
             onPressed: () async {
               await FirebaseAuth.instance.signOut();
+              if (!context.mounted) return;
               Navigator.pushReplacementNamed(context, '/login');
             },
           ),
