@@ -34,49 +34,53 @@ class ColorDetalleScreen extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(24, 12, 24, 26),
             child: Column(
               children: [
-              Row(
-                children: [
-                  _buildTitleCapsule(colorItem, color, isWhite),
-                  const Spacer(),
-                  BotonAccion(
-                    texto: 'VOLVER',
-                    icono: Icons.arrow_back_rounded,
-                    colorPrincipal: const Color(0xFF339AF0),
-                    colorSombra: const Color(0xFF1971C2),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
+                Row(
+                  children: [
+                    _buildTitleCapsule(colorItem, color, isWhite),
+                    const Spacer(),
+                    BotonAccion(
+                      texto: 'VOLVER',
+                      icono: Icons.arrow_back_rounded,
+                      colorPrincipal: const Color(0xFF339AF0),
+                      colorSombra: const Color(0xFF1971C2),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
 
-              const SizedBox(height: 18),
+                const SizedBox(height: 18),
 
-              _buildImageAndCircle(colorItem, color, isWhite),
+                _buildImageAndCircle(colorItem, color, isWhite),
 
-              const SizedBox(height: 18),
+                const SizedBox(height: 18),
 
-              BotonAccion(
-                texto: 'ESCUCHAR',
-                icono: Icons.volume_up_rounded,
-                colorPrincipal: ColoresApp.completado,
-                colorSombra: const Color(0xFF2F9E44),
-                onPressed: () => AudioService.reproducirAudio(colorItem.rutaAudio),
-              ),
+                BotonAccion(
+                  texto: 'ESCUCHAR',
+                  icono: Icons.volume_up_rounded,
+                  colorPrincipal: ColoresApp.completado,
+                  colorSombra: const Color(0xFF2F9E44),
+                  onPressed: () =>
+                      AudioService.reproducirAudio(colorItem.rutaAudio),
+                ),
 
-              const SizedBox(height: 18),
+                const SizedBox(height: 18),
 
-              BotonAccion(
-                texto: 'PRACTICAR',
-                icono: Icons.school_rounded,
-                colorPrincipal: const Color(0xFF339AF0),
-                colorSombra: const Color(0xFF1971C2),
-                onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/color_practica',
-                    arguments: colorItem,
-                  );
-                },
-              ),
+                BotonAccion(
+                  texto: 'PRACTICAR',
+                  icono: Icons.school_rounded,
+                  colorPrincipal: const Color(0xFF339AF0),
+                  colorSombra: const Color(0xFF1971C2),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'La práctica de colores estará disponible próximamente.',
+                        ),
+                        backgroundColor: Colors.orange,
+                      ),
+                    );
+                  },
+                ),
               ],
             ),
           ),
