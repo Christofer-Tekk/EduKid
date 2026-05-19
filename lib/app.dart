@@ -10,6 +10,9 @@ import 'features/colores/screens/color_detalle_screen.dart';
 import 'features/colores/screens/color_practica_screen.dart';
 import 'features/pizarra/screens/pizarra_libre_screen.dart';
 import 'features/pizarra/screens/pizarra_guiada_screen.dart';
+import 'features/numeros/screens/numeros_screen.dart';
+import 'features/numeros/screens/numero_detalle_screen.dart';
+import 'features/numeros/screens/numero_practica_screen.dart';
 
 class EduKidApp extends StatelessWidget {
   const EduKidApp({super.key});
@@ -20,7 +23,7 @@ class EduKidApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'EduKid',
       theme: ThemeData(primarySwatch: Colors.orange),
-      initialRoute: '/login',
+      initialRoute: '/home',
       routes: {
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(), // Cambiado a registro_screen.dart
@@ -33,6 +36,9 @@ class EduKidApp extends StatelessWidget {
         '/color_practica': (context) => const ColorPracticaScreen(),
         '/pizarra_libre': (context) => const PizarraLibreScreen(),
         '/pizarra_guiada': (context) => const PizarraGuiadaScreen(),
+        '/numeros': (context) => const NumerosScreen(),
+        '/numero_detalle': (context) => const NumeroDetalleScreen(),
+        '/numero_practica': (context) => const NumeroPracticaScreen(),
       },
     );
   }
