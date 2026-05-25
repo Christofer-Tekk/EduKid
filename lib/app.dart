@@ -13,6 +13,9 @@ import 'features/pizarra/screens/pizarra_guiada_screen.dart';
 import 'features/formas/screens/formas_screen.dart';
 import 'features/formas/screens/forma_detalle_screen.dart';
 import 'features/formas/screens/forma_practica_screen.dart';
+import 'features/numeros/screens/numeros_screen.dart';
+import 'features/numeros/screens/numero_detalle_screen.dart';
+import 'features/numeros/screens/numero_practica_screen.dart';
 
 class EduKidApp extends StatelessWidget {
   const EduKidApp({super.key});
@@ -39,6 +42,9 @@ class EduKidApp extends StatelessWidget {
         '/formas':        (_) => const FormasScreen(),
         '/forma_detalle': (_) => const FormaDetalleScreen(),
         '/forma_practica': (_) => const FormaPracticaScreen(),
+        '/numeros': (context) => const NumerosScreen(),
+        '/numero_detalle': (context) => const NumeroDetalleScreen(),
+        '/numero_practica': (context) => NumeroPracticaScreen(),
       },
     );
   }
