@@ -23,7 +23,7 @@ class EduKidApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'EduKid',
       theme: ThemeData(primarySwatch: Colors.orange),
-      initialRoute: '/home',
+      initialRoute: '/login',
       routes: {
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(), // Cambiado a registro_screen.dart
@@ -38,7 +38,7 @@ class EduKidApp extends StatelessWidget {
         '/pizarra_guiada': (context) => const PizarraGuiadaScreen(),
         '/numeros': (context) => const NumerosScreen(),
         '/numero_detalle': (context) => const NumeroDetalleScreen(),
-        '/numero_practica': (context) => const NumeroPracticaScreen(),
+        '/numero_practica': (context) => NumeroPracticaScreen(),
       },
     );
   }

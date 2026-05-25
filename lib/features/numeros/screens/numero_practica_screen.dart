@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../data/models/numero_model.dart';
 
 class NumeroPracticaScreen extends StatefulWidget {
-  const NumeroPracticaScreen({Key? key}) : super(key: key);
+  NumeroPracticaScreen({Key? key}) : super(key: key);
 
   @override
   State<NumeroPracticaScreen> createState() => _NumeroPracticaScreenState();
@@ -21,31 +21,60 @@ class _NumeroPracticaScreenState extends State<NumeroPracticaScreen> {
 
   void _limpiarPizarra() => setState(() => _puntos.clear());
 
-  // --- LÓGICA DE VERIFICACIÓN (Igual a la de las letras) ---
   void _verificarTrazo() {
-    if (_puntos.isEmpty || _puntos.where((p) => p != null).length < 10) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('¡Traza el número primero!')));
-      return;
+    // Validación: si no dibujó casi nada, falla. Si dibujó suficiente, es éxito.
+    if (_puntos.isEmpty || _puntos.where((p) => p != null).length < 20) {
+      _mostrarDialogoFallo();
+    } else {
+      _mostrarDialogoExito();
     }
-    
-    // Aquí podrías añadir una validación más compleja, pero por ahora mostramos éxito
-    _mostrarDialogoResultado(true);
   }
 
-  void _mostrarDialogoResultado(bool esCorrecto) {
+  void _mostrarDialogoFallo() {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: Text(esCorrecto ? '¡Excelente! 🎉' : '¡Inténtalo otra vez! 💪'),
-        content: Text(esCorrecto ? '¡Has trazado el número ${_numero.valor} perfectamente!' : 'Asegúrate de seguir la guía.'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('¡Inténtalo de nuevo! 💪', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const Text('Asegúrate de trazar justo encima del número gris', textAlign: TextAlign.center),
+        actionsAlignment: MainAxisAlignment.center,
         actions: [
-          TextButton(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
             onPressed: () {
               Navigator.pop(context);
-              if (esCorrecto) Navigator.pop(context); // Regresa a la pantalla anterior
+              _limpiarPizarra();
             },
-            child: const Text('Continuar'),
+            child: const Text('Intentar otra vez', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _mostrarDialogoExito() {
+    // ¡AQUÍ SE GUARDA EL PROGRESO!
+    setState(() {
+      _numero.completado = true;
+    });
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('¡Excelente! ⭐', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const Text('¡Has completado este número!\nSe guardó tu progreso.', textAlign: TextAlign.center),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF51CF66), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+            onPressed: () {
+              Navigator.pop(context); // Cierra el diálogo
+              Navigator.pop(context); // Regresa a la pantalla de detalle
+            },
+            child: const Text('¡Listo! 🎉', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -57,53 +86,42 @@ class _NumeroPracticaScreenState extends State<NumeroPracticaScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Fondo
           Positioned.fill(child: Image.asset('assets/images/fondo/fondo_numeros.png', fit: BoxFit.cover)),
-
-          // --- EL CUADRADO BLANCO (Lo que pediste) ---
+          
           Center(
             child: Container(
               width: 300,
               height: 300,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.8), // Blanco con transparencia
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: Colors.blueAccent, width: 3),
+                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10)],
               ),
               child: Center(
                 child: Text(
                   _numero.valor.toString(),
-                  style: TextStyle(
-                    fontSize: 200,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade400, // Ahora se verá mucho mejor
-                  ),
+                  style: TextStyle(fontSize: 250, fontWeight: FontWeight.bold, color: Colors.grey.shade300),
                 ),
               ),
             ),
           ),
 
-          // Pizarra de dibujo
           GestureDetector(
             onPanUpdate: (d) => setState(() => _puntos.add((context.findRenderObject() as RenderBox).globalToLocal(d.globalPosition))),
             onPanEnd: (_) => setState(() => _puntos.add(null)),
-            child: CustomPaint(
-              painter: _PainterNumeros(_puntos, _colorTrazado),
-              size: Size.infinite,
-            ),
+            child: CustomPaint(painter: _PainterNumeros(_puntos, _colorTrazado), size: Size.infinite),
           ),
 
-          // Barra Superior (Botón Volver)
           Positioned(
             top: 40, left: 20,
             child: ElevatedButton.icon(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back), label: const Text('VOLVER'),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, shape: const StadiumBorder()),
+              icon: const Icon(Icons.arrow_back, color: Colors.white, size: 16), 
+              label: const Text('VOLVER', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF339AF0), shape: const StadiumBorder()),
             ),
           ),
 
-          // Botones inferiores
           Positioned(
             bottom: 30, left: 20, right: 20,
             child: Row(
@@ -111,13 +129,13 @@ class _NumeroPracticaScreenState extends State<NumeroPracticaScreen> {
               children: [
                 ElevatedButton.icon(
                   onPressed: _limpiarPizarra,
-                  icon: const Icon(Icons.delete), label: const Text('LIMPIAR'),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, shape: const StadiumBorder(), padding: const EdgeInsets.all(20)),
+                  icon: const Icon(Icons.refresh, color: Colors.white), label: const Text('LIMPIAR', style: TextStyle(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, shape: const StadiumBorder(), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15)),
                 ),
                 ElevatedButton.icon(
                   onPressed: _verificarTrazo,
-                  icon: const Icon(Icons.check), label: const Text('VERIFICAR'),
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF51CF66), shape: const StadiumBorder(), padding: const EdgeInsets.all(20)),
+                  icon: const Icon(Icons.check, color: Colors.white), label: const Text('VERIFICAR', style: TextStyle(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF51CF66), shape: const StadiumBorder(), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15)),
                 ),
               ],
             ),

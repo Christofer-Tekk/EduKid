@@ -3,7 +3,8 @@ class NumeroModel {
   final String nombre;
   final String imagen;
   final String audio;
-  final String videoUrl; // Aquí irán los links de YouTube luego
+  final String videoUrl;
+  bool completado; // ¡Nuevo! Para saber si ya tiene estrellita
 
   NumeroModel({
     required this.valor,
@@ -11,5 +12,6 @@ class NumeroModel {
     required this.imagen,
     required this.audio,
     required this.videoUrl,
+    this.completado = false, // Por defecto empieza sin estrella
   });
 }
