@@ -10,6 +10,9 @@ import 'features/colores/screens/color_detalle_screen.dart';
 import 'features/colores/screens/color_practica_screen.dart';
 import 'features/pizarra/screens/pizarra_libre_screen.dart';
 import 'features/pizarra/screens/pizarra_guiada_screen.dart';
+import 'features/formas/screens/formas_screen.dart';
+import 'features/formas/screens/forma_detalle_screen.dart';
+import 'features/formas/screens/forma_practica_screen.dart';
 
 class EduKidApp extends StatelessWidget {
   const EduKidApp({super.key});
@@ -33,6 +36,9 @@ class EduKidApp extends StatelessWidget {
         '/color_practica': (context) => const ColorPracticaScreen(),
         '/pizarra_libre': (context) => const PizarraLibreScreen(),
         '/pizarra_guiada': (context) => const PizarraGuiadaScreen(),
+        '/formas':        (_) => const FormasScreen(),
+        '/forma_detalle': (_) => const FormaDetalleScreen(),
+        '/forma_practica': (_) => const FormaPracticaScreen(),
       },
     );
   }
