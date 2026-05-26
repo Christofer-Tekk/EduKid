@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../core/widgets/background_wrapper.dart';
 import '../../../core/widgets/boton_accion.dart';
 import '../../../core/widgets/app_texto.dart';
+import '../../../core/widgets/practice_success_dialog.dart';
 import '../../../core/constants/colores_app.dart';
 import '../../../data/models/letra_model.dart';
 import '../../../data/services/progreso_service.dart';
@@ -98,31 +99,21 @@ class _LetraPracticaScreenState extends State<LetraPracticaScreen> {
   }
 
   void _mostrarDialogoExito() {
-    showDialog(
+    PracticeSuccessDialog.show(
       context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('¡Excelente! ⭐', textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
-        content: const Text('¡Has completado esta letra!\nSe guardó tu progreso.',
-          textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF51CF66),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text('¡Listo! 🎉', style: TextStyle(fontSize: 16)),
-          ),
-        ],
-      ),
+      message:
+          '¡Muy bien! Completaste la letra ${letra.letraMayuscula}. Puedes seguir practicando cuando quieras.',
+      primaryText: 'Practicar otra vez',
+      secondaryText: 'Volver',
+      onPrimary: () {
+        setState(() {
+          _enMinuscula = false;
+          _mayusculaCompletada = false;
+          _minusculaCompletada = false;
+        });
+        _pizarraKey.currentState?.limpiar();
+      },
+      onSecondary: () => Navigator.pop(context, true),
     );
   }
 

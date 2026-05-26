@@ -8,6 +8,7 @@ import '../../../core/constants/colores_app.dart';
 import '../../../core/widgets/app_texto.dart';
 import '../../../core/widgets/background_wrapper.dart';
 import '../../../core/widgets/boton_accion.dart';
+import '../../../core/widgets/practice_success_dialog.dart';
 import '../../../data/local/datos_formas.dart';
 import '../../../data/models/forma_model.dart';
 import '../../../data/services/progreso_service.dart';
@@ -100,7 +101,7 @@ class _FormaPracticaScreenState extends State<FormaPracticaScreen> {
       });
 
       if (_practicaCompletada) {
-        await ProgresoService.completarColor(_formaObjetivo.clave);
+        await ProgresoService.completarForma(_formaObjetivo.clave);
         if (!mounted) return;
         _mostrarDialogoCorrecto();
       }
@@ -114,38 +115,14 @@ class _FormaPracticaScreenState extends State<FormaPracticaScreen> {
   }
 
   void _mostrarDialogoCorrecto() {
-    showDialog(
+    PracticeSuccessDialog.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text(
-          '¡Correcto! 🎉',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: ColoresApp.completado, fontWeight: FontWeight.w900),
-        ),
-        content: Text(
-          '¡Encontraste todos los ${_formaObjetivo.nombre}s!\n⭐ ¡Práctica completada!',
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontWeight: FontWeight.w700),
-        ),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _reiniciar();
-            },
-            child: const Text('Seguir practicando', style: TextStyle(fontWeight: FontWeight.w900)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              Navigator.pop(context);
-            },
-            child: const Text('Volver', style: TextStyle(fontWeight: FontWeight.w900)),
-          ),
-        ],
-      ),
+      message:
+          '¡Muy bien! Encontraste todas las figuras con forma de ${_formaObjetivo.nombre}.',
+      primaryText: 'Practicar otra vez',
+      secondaryText: 'Volver',
+      onPrimary: _reiniciar,
+      onSecondary: () => Navigator.pop(context, true),
     );
   }
 

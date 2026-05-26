@@ -9,6 +9,7 @@ import '../../../core/constants/colores_app.dart';
 import '../../../core/widgets/app_texto.dart';
 import '../../../core/widgets/background_wrapper.dart';
 import '../../../core/widgets/boton_accion.dart';
+import '../../../core/widgets/practice_success_dialog.dart';
 import '../../../data/local/datos_colores.dart';
 import '../../../data/models/color_model.dart';
 import '../../../data/services/progreso_service.dart';
@@ -38,7 +39,18 @@ class _ColorPracticaScreenState extends State<ColorPracticaScreen> {
     if (_initialized) return;
 
     final args = ModalRoute.of(context)?.settings.arguments;
-    _colorObjetivo = args is ColorModel ? args : datosColores.first;
+
+    if (args is ColorModel) {
+      _colorObjetivo = args;
+    } else if (args is Color) {
+      _colorObjetivo = datosColores.firstWhere(
+        (color) => color.colorHex == args.value,
+        orElse: () => datosColores.first,
+      );
+    } else {
+      _colorObjetivo = datosColores.first;
+    }
+
     _opciones = _generarOpciones();
     _initialized = true;
   }
@@ -108,51 +120,14 @@ class _ColorPracticaScreenState extends State<ColorPracticaScreen> {
   }
 
   void _mostrarDialogoCorrecto() {
-    showDialog(
+    PracticeSuccessDialog.show(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          title: const Text(
-            '¡Correcto!',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: ColoresApp.completado,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          content: Text(
-            'Encontraste todas las formas de color ${_colorObjetivo.nombre}.',
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
-          actionsAlignment: MainAxisAlignment.center,
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _reiniciarOpciones();
-              },
-              child: const Text(
-                'Seguir practicando',
-                style: TextStyle(fontWeight: FontWeight.w900),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.pop(context);
-              },
-              child: const Text(
-                'Volver',
-                style: TextStyle(fontWeight: FontWeight.w900),
-              ),
-            ),
-          ],
-        );
-      },
+      message:
+          '¡Muy bien! Encontraste todas las formas de color ${_colorObjetivo.nombre}.',
+      primaryText: 'Practicar otra vez',
+      secondaryText: 'Volver',
+      onPrimary: _reiniciarOpciones,
+      onSecondary: () => Navigator.pop(context, true),
     );
   }
 

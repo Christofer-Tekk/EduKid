@@ -5,38 +5,29 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ProgresoService {
   static const String _prefixLetra = 'letra_';
   static const String _prefixColor = 'color_';
+  static const String _prefixNumero = 'numero_';
+  static const String _prefixForma = 'forma_';
 
-  // ─────────────────────────────────────────────────────────────
-  // PROGRESO DE LETRAS
-  // ─────────────────────────────────────────────────────────────
-
-  /// Obtener estado de una letra (no_iniciado, en_progreso, completado)
-  static Future<String> obtenerEstado(String letraMayuscula) async {
+  // ─────────────────────────────────────────────
+  // MÉTODOS GENERALES
+  // ─────────────────────────────────────────────
+  static Future<String> _obtenerEstadoPorClave(String key) async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('$_prefixLetra$letraMayuscula') ?? 'no_iniciado';
+    return prefs.getString(key) ?? 'no_iniciado';
   }
 
-  /// Marcar letra como completada
-  static Future<void> completarLetra(String letraMayuscula) async {
+  static Future<void> _guardarEstadoPorClave(String key, String estado) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('$_prefixLetra$letraMayuscula', 'completado');
+    await prefs.setString(key, estado);
   }
 
-  /// Marcar letra como en progreso
-  static Future<void> iniciarLetra(String letraMayuscula) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('$_prefixLetra$letraMayuscula', 'en_progreso');
-  }
-
-  /// Obtener todas las letras completadas
-  static Future<int> obtenerLetrasCompletadas() async {
+  static Future<int> _contarCompletados(String prefix) async {
     final prefs = await SharedPreferences.getInstance();
     final keys = prefs.getKeys();
-    int contador = 0;
+    var contador = 0;
 
     for (final key in keys) {
-      if (key.startsWith(_prefixLetra) &&
-          prefs.getString(key) == 'completado') {
+      if (key.startsWith(prefix) && prefs.getString(key) == 'completado') {
         contador++;
       }
     }
@@ -44,41 +35,79 @@ class ProgresoService {
     return contador;
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // PROGRESO DE COLORES
-  // ─────────────────────────────────────────────────────────────
-
-  /// Obtener estado de un color (no_iniciado, en_progreso, completado)
-  static Future<String> obtenerEstadoColor(String claveColor) async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('$_prefixColor$claveColor') ?? 'no_iniciado';
+  // ─────────────────────────────────────────────
+  // ABECEDARIO
+  // ─────────────────────────────────────────────
+  static Future<String> obtenerEstado(String letraMayuscula) {
+    return _obtenerEstadoPorClave('$_prefixLetra$letraMayuscula');
   }
 
-  /// Marcar color como completado
-  static Future<void> completarColor(String claveColor) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('$_prefixColor$claveColor', 'completado');
+  static Future<void> completarLetra(String letraMayuscula) {
+    return _guardarEstadoPorClave('$_prefixLetra$letraMayuscula', 'completado');
   }
 
-  /// Marcar color como en progreso
-  static Future<void> iniciarColor(String claveColor) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('$_prefixColor$claveColor', 'en_progreso');
+  static Future<void> iniciarLetra(String letraMayuscula) {
+    return _guardarEstadoPorClave('$_prefixLetra$letraMayuscula', 'en_progreso');
   }
 
-  /// Obtener todos los colores completados
-  static Future<int> obtenerColoresCompletados() async {
-    final prefs = await SharedPreferences.getInstance();
-    final keys = prefs.getKeys();
-    int contador = 0;
+  static Future<int> obtenerLetrasCompletadas() {
+    return _contarCompletados(_prefixLetra);
+  }
 
-    for (final key in keys) {
-      if (key.startsWith(_prefixColor) &&
-          prefs.getString(key) == 'completado') {
-        contador++;
-      }
-    }
+  // ─────────────────────────────────────────────
+  // COLORES
+  // ─────────────────────────────────────────────
+  static Future<String> obtenerEstadoColor(String clave) {
+    return _obtenerEstadoPorClave('$_prefixColor$clave');
+  }
 
-    return contador;
+  static Future<void> completarColor(String clave) {
+    return _guardarEstadoPorClave('$_prefixColor$clave', 'completado');
+  }
+
+  static Future<void> iniciarColor(String clave) {
+    return _guardarEstadoPorClave('$_prefixColor$clave', 'en_progreso');
+  }
+
+  static Future<int> obtenerColoresCompletados() {
+    return _contarCompletados(_prefixColor);
+  }
+
+  // ─────────────────────────────────────────────
+  // NÚMEROS
+  // ─────────────────────────────────────────────
+  static Future<String> obtenerEstadoNumero(int numero) {
+    return _obtenerEstadoPorClave('$_prefixNumero$numero');
+  }
+
+  static Future<void> completarNumero(int numero) {
+    return _guardarEstadoPorClave('$_prefixNumero$numero', 'completado');
+  }
+
+  static Future<void> iniciarNumero(int numero) {
+    return _guardarEstadoPorClave('$_prefixNumero$numero', 'en_progreso');
+  }
+
+  static Future<int> obtenerNumerosCompletados() {
+    return _contarCompletados(_prefixNumero);
+  }
+
+  // ─────────────────────────────────────────────
+  // FORMAS
+  // ─────────────────────────────────────────────
+  static Future<String> obtenerEstadoForma(String clave) {
+    return _obtenerEstadoPorClave('$_prefixForma$clave');
+  }
+
+  static Future<void> completarForma(String clave) {
+    return _guardarEstadoPorClave('$_prefixForma$clave', 'completado');
+  }
+
+  static Future<void> iniciarForma(String clave) {
+    return _guardarEstadoPorClave('$_prefixForma$clave', 'en_progreso');
+  }
+
+  static Future<int> obtenerFormasCompletadas() {
+    return _contarCompletados(_prefixForma);
   }
 }

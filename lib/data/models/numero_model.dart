@@ -1,10 +1,12 @@
+// lib/data/models/numero_model.dart
+
 class NumeroModel {
   final int valor;
   final String nombre;
   final String imagen;
   final String audio;
   final String videoUrl;
-  bool completado; // ¡Nuevo! Para saber si ya tiene estrellita
+  bool completado;
 
   NumeroModel({
     required this.valor,
@@ -12,6 +14,8 @@ class NumeroModel {
     required this.imagen,
     required this.audio,
     required this.videoUrl,
-    this.completado = false, // Por defecto empieza sin estrella
+    this.completado = false,
   });
+
+  String get estado => completado ? 'completado' : 'no_iniciado';
 }

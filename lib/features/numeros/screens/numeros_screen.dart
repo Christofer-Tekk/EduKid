@@ -1,156 +1,261 @@
+// lib/features/numeros/screens/numeros_screen.dart
+
 import 'package:flutter/material.dart';
-import '../../../data/local/datos_numeros.dart';
+import 'package:provider/provider.dart';
 
-class NumerosScreen extends StatefulWidget {
-  const NumerosScreen({Key? key}) : super(key: key);
+import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/colores_app.dart';
+import '../../../core/widgets/background_wrapper.dart';
+import '../../../core/widgets/boton_accion.dart';
+import '../controllers/numeros_controller.dart';
 
-  @override
-  State<NumerosScreen> createState() => _NumerosScreenState();
-}
-
-class _NumerosScreenState extends State<NumerosScreen> {
-  final List<Color> _colores = const [
-    Color(0xFFFF6B6B), Color(0xFF4ECDC4), Color(0xFFFFD166), 
-    Color(0xFF06D6A0), Color(0xFF118AB2), Color(0xFFE5989B), 
-    Color(0xFF8338EC), Color(0xFFFF9F1C), Color(0xFF90BE6D),
-  ];
+class NumerosScreen extends StatelessWidget {
+  const NumerosScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    int completados = listaNumeros.where((n) => n.completado).length;
-
-    return Scaffold(
-      body: Stack(
-        children: [
-          // ¡FONDO CORREGIDO! El de los números pastel
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/fondo/fondo_numeros.png',
-              fit: BoxFit.cover,
-            ),
-          ),
-          
-          SafeArea(
-            child: Column(
-              children: [
-                // BARRA SUPERIOR (Igual que en Colores y Abecedario)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 15.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Cápsula Blanca del Título
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(25),
-                          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, offset: Offset(0, 3))],
-                        ),
-                        child: const Text(
-                          'Números',
-                          style: TextStyle(
-                            color: Color(0xFFD6336C), // Rojo/Rosado fuerte
-                            fontSize: 26, 
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
+    return ChangeNotifierProvider(
+      create: (_) => NumerosController(),
+      child: BackgroundWrapper(
+        assetPath: AppFondos.numeros,
+        child: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Flexible(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: _TituloNumerosCard(texto: 'Números'),
                       ),
-                      
-                      // Botón VOLVER (Azul)
-                      ElevatedButton.icon(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.arrow_back, color: Colors.white, size: 18),
-                        label: const Text('VOLVER', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF339AF0), // Azul claro
-                          shape: const StadiumBorder(),
-                          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                          elevation: 5,
-                        ),
+                    ),
+                    const SizedBox(width: 12),
+                    BotonAccion(
+                      texto: 'VOLVER',
+                      icono: Icons.arrow_back,
+                      colorPrincipal: Colors.blue,
+                      colorSombra: const Color(0xFF1971C2),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              Consumer<NumerosController>(
+                builder: (context, controller, _) => Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: _ProgresoCard(
+                    texto: '${controller.numerosCompletados}/20 completados ⭐',
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Consumer<NumerosController>(
+                  builder: (context, controller, _) {
+                    return GridView.builder(
+                      padding: const EdgeInsets.all(14),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 4,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                      ),
+                      itemCount: controller.numeros.length,
+                      itemBuilder: (context, index) {
+                        final numero = controller.numeros[index];
+
+                        return _NumeroItem(
+                          texto: numero.valor.toString(),
+                          color: _obtenerColor(index),
+                          completado: numero.completado,
+                          onTap: () async {
+                            await Navigator.pushNamed(
+                              context,
+                              '/numero_detalle',
+                              arguments: numero,
+                            );
+                            controller.cargarNumeros();
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _obtenerColor(int index) {
+    final colores = [
+      const Color(0xFFFF6B6B),
+      const Color(0xFFFF922B),
+      const Color(0xFFFFD166),
+      const Color(0xFF51CF66),
+      const Color(0xFF339AF0),
+      const Color(0xFFCC5DE8),
+      const Color(0xFF20C997),
+      const Color(0xFFFF6B9D),
+    ];
+
+    return colores[index % colores.length];
+  }
+}
+
+class _NumeroItem extends StatelessWidget {
+  final String texto;
+  final Color color;
+  final bool completado;
+  final VoidCallback onTap;
+
+  const _NumeroItem({
+    required this.texto,
+    required this.color,
+    required this.completado,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.white, width: 3),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  offset: Offset(0, 4),
+                  blurRadius: 5,
+                ),
+              ],
+            ),
+            child: Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  texto,
+                  style: const TextStyle(
+                    fontSize: 42,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black38,
+                        blurRadius: 3,
+                        offset: Offset(1.5, 1.5),
                       ),
                     ],
                   ),
                 ),
-                
-                // CÁPSULA BLANCA DE PROGRESO
-                Container(
-                  margin: const EdgeInsets.only(bottom: 15.0),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, offset: Offset(0, 2))],
-                  ),
-                  child: Text(
-                    '$completados/20 completadas ⭐',
-                    style: const TextStyle(
-                      fontSize: 16, 
-                      fontWeight: FontWeight.w900, 
-                      color: Color(0xFF1B3B6F) // Azul oscuro
-                    ),
-                  ),
-                ),
-                
-                // CUADRÍCULA DE NÚMEROS (Volvimos al tamaño original grande)
-                Expanded(
-                  child: GridView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 4, 
-                      crossAxisSpacing: 15, 
-                      mainAxisSpacing: 15, 
-                      childAspectRatio: 0.9,
-                    ),
-                    itemCount: listaNumeros.length,
-                    itemBuilder: (context, index) {
-                      final numero = listaNumeros[index];
-                      final colorBox = _colores[index % _colores.length];
-
-                      return GestureDetector(
-                        onTap: () async {
-                          await Navigator.pushNamed(context, '/numero_detalle', arguments: numero);
-                          setState(() {}); 
-                        },
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                color: colorBox,
-                                borderRadius: BorderRadius.circular(15),
-                                border: Border.all(color: Colors.white, width: 3),
-                                boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 4)],
-                              ),
-                              child: Center(
-                                child: Text(
-                                  numero.valor.toString(),
-                                  style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.white, shadows: [Shadow(color: Colors.black38, blurRadius: 2, offset: Offset(1, 1))]),
-                                ),
-                              ),
-                            ),
-                            
-                            // Estrellita
-                            if (numero.completado)
-                              Positioned(
-                                top: -8,
-                                left: -8,
-                                child: Container(
-                                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)]),
-                                  padding: const EdgeInsets.all(4),
-                                  child: const Icon(Icons.star, color: Colors.amber, size: 20),
-                                ),
-                              ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
+          if (completado)
+            Positioned(
+              top: -8,
+              right: -8,
+              child: Container(
+                padding: const EdgeInsets.all(5),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: Colors.black26, blurRadius: 5),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.star,
+                  color: ColoresApp.estrella,
+                  size: 22,
+                ),
+              ),
+            ),
         ],
+      ),
+    );
+  }
+}
+
+class _TituloNumerosCard extends StatelessWidget {
+  final String texto;
+
+  const _TituloNumerosCard({required this.texto});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.88),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white, width: 2.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          texto,
+          style: const TextStyle(
+            color: ColoresApp.rojo,
+            fontSize: 27,
+            fontWeight: FontWeight.w900,
+            shadows: SombrasApp.blanca,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProgresoCard extends StatelessWidget {
+  final String texto;
+
+  const _ProgresoCard({required this.texto});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.center,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.86),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: Colors.white, width: 2),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 8,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Text(
+          texto,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: ColoresApp.azulMedio,
+            fontSize: 17,
+            fontWeight: FontWeight.w900,
+            shadows: SombrasApp.blanca,
+          ),
+        ),
       ),
     );
   }

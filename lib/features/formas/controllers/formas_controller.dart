@@ -36,7 +36,7 @@ class FormasController extends ChangeNotifier {
         .toList();
 
     for (final forma in formas) {
-      forma.estado = await ProgresoService.obtenerEstadoColor(forma.clave);
+      forma.estado = await ProgresoService.obtenerEstadoForma(forma.clave);
     }
 
     completados = formas.where((f) => f.estado == 'completado').length;
@@ -45,7 +45,7 @@ class FormasController extends ChangeNotifier {
   }
 
   Future<void> completarForma(String clave) async {
-    await ProgresoService.completarColor(clave);
+    await ProgresoService.completarForma(clave);
 
     for (final forma in formas) {
       if (forma.clave == clave) {

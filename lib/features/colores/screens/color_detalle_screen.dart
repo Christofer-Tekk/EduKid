@@ -71,13 +71,10 @@ class ColorDetalleScreen extends StatelessWidget {
                   colorPrincipal: const Color(0xFF339AF0),
                   colorSombra: const Color(0xFF1971C2),
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'La práctica de colores estará disponible próximamente.',
-                        ),
-                        backgroundColor: Colors.orange,
-                      ),
+                    Navigator.pushNamed(
+                      context,
+                      '/color_practica',
+                      arguments: colorItem,
                     );
                   },
                 ),
