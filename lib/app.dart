@@ -16,6 +16,9 @@ import 'features/formas/screens/forma_practica_screen.dart';
 import 'features/numeros/screens/numeros_screen.dart';
 import 'features/numeros/screens/numero_detalle_screen.dart';
 import 'features/numeros/screens/numero_practica_screen.dart';
+import 'features/animales/screens/animales_screen.dart';
+import 'features/animales/screens/animal_detalle_screen.dart';
+import 'features/animales/screens/animal_practica_screen.dart';
 
 class EduKidApp extends StatelessWidget {
   const EduKidApp({super.key});
@@ -45,6 +48,9 @@ class EduKidApp extends StatelessWidget {
         '/numeros': (context) => const NumerosScreen(),
         '/numero_detalle': (context) => const NumeroDetalleScreen(),
         '/numero_practica': (context) => NumeroPracticaScreen(),
+        '/animales': (context) => const AnimalesScreen(),
+        '/animal_detalle': (context) => const AnimalDetalleScreen(),
+        '/animal_practica': (context) => const AnimalPracticaScreen(),
       },
     );
   }
