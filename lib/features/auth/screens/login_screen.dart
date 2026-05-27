@@ -192,12 +192,88 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final userCredential = await _googleSignInService.signInWithGoogle();
+      final result = await _googleSignInService.signInWithGoogle();
 
-      if (userCredential != null && mounted) {
+      // Usuario canceló
+      if (result == null) {
+        if (mounted) setState(() => _isGoogleLoading = false);
+        return;
+      }
+
+      if (!mounted) return;
+
+      // ── Usuario NUEVO → preguntar si quiere crear cuenta ──────
+      if (result.isNewUser) {
+        // Eliminar la cuenta recién creada — no confirmó aún
+        await result.credential.user?.delete();
+        await _googleSignInService.signOut();
+
+        if (!mounted) return;
+        setState(() => _isGoogleLoading = false);
+
+        // Mostrar diálogo de confirmación
+        final confirmar = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Text(
+              '¿Crear cuenta?',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.w900),
+            ),
+            content: Text(
+              'No tienes una cuenta con\n${result.credential.user?.email ?? 'este correo'}.\n\n¿Quieres registrarte?',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15),
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text(
+                  'Cancelar',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF6000),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text(
+                  'Crear cuenta',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+
+        if (confirmar != true || !mounted) return;
+
+        // Volver a hacer el login de Google para crear la cuenta
+        setState(() => _isGoogleLoading = true);
+        final newResult = await _googleSignInService.signInWithGoogle();
+        if (newResult == null || !mounted) {
+          setState(() => _isGoogleLoading = false);
+          return;
+        }
+        Navigator.pushReplacementNamed(context, '/home');
+
+      } else {
+        // ── Usuario EXISTENTE → entrar directo ─────────────────
         Navigator.pushReplacementNamed(context, '/home');
       }
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       _showTopMessage('Error al continuar con Google. Intenta de nuevo.');
     } finally {

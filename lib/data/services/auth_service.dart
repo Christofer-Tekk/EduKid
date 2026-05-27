@@ -1,3 +1,5 @@
+// lib/data/services/auth_service.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -5,59 +7,55 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
-
-  User? get currentUser => _auth.currentUser;
-
+  // ── Iniciar sesión con correo ─────────────────────────────────
   Future<UserCredential> signIn({
     required String email,
     required String password,
-  }) {
-    return _auth.signInWithEmailAndPassword(
+  }) async {
+    final credential = await _auth.signInWithEmailAndPassword(
       email: email,
       password: password,
     );
+    return credential;
   }
 
+  // ── Registrar con correo ──────────────────────────────────────
   Future<UserCredential> register({
     required String email,
     required String password,
-    String? displayName,
   }) async {
     final credential = await _auth.createUserWithEmailAndPassword(
       email: email,
       password: password,
     );
 
-    final cleanName = displayName?.trim();
-
-    if (cleanName != null && cleanName.isNotEmpty) {
-      await credential.user?.updateDisplayName(cleanName);
+    // Guardar en Firestore (sin bloquear el login si falla)
+    try {
+      await _db.collection('users').doc(credential.user!.uid).set({
+        'uid': credential.user!.uid,
+        'email': email,
+        'creadoEn': FieldValue.serverTimestamp(),
+        'metodo': 'correo',
+      });
+    } catch (_) {
+      // No bloquear el registro si Firestore falla
     }
-
-    final userData = <String, dynamic>{
-      'uid': credential.user!.uid,
-      'email': email,
-      'createdAt': FieldValue.serverTimestamp(),
-    };
-
-    if (cleanName != null && cleanName.isNotEmpty) {
-      userData['displayName'] = cleanName;
-    }
-
-    await _db.collection('users').doc(credential.user!.uid).set(
-          userData,
-          SetOptions(merge: true),
-        );
 
     return credential;
   }
 
-  Future<void> signOut() {
-    return _auth.signOut();
+  // ── Restablecer contraseña ────────────────────────────────────
+  Future<void> sendPasswordReset(String email) async {
+    await _auth.sendPasswordResetEmail(email: email);
   }
 
-  Future<void> sendPasswordReset(String email) {
-    return _auth.sendPasswordResetEmail(email: email);
+  // ── Cerrar sesión ─────────────────────────────────────────────
+  Future<void> signOut() async {
+    await _auth.signOut();
   }
+
+  // ── Usuario actual ────────────────────────────────────────────
+  User? get currentUser => _auth.currentUser;
+
+  Stream<User?> get authStateChanges => _auth.authStateChanges();
 }
