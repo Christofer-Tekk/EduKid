@@ -9,7 +9,7 @@ import '../../../core/constants/colores_app.dart';
 import '../../../core/widgets/app_texto.dart';
 import '../../../core/widgets/background_wrapper.dart';
 import '../../../core/widgets/boton_accion.dart';
-import '../../../core/widgets/practice_success_dialog.dart';
+import '../../../core/widgets/home_button.dart';
 import '../../../data/local/datos_colores.dart';
 import '../../../data/models/color_model.dart';
 import '../../../data/services/progreso_service.dart';
@@ -39,18 +39,7 @@ class _ColorPracticaScreenState extends State<ColorPracticaScreen> {
     if (_initialized) return;
 
     final args = ModalRoute.of(context)?.settings.arguments;
-
-    if (args is ColorModel) {
-      _colorObjetivo = args;
-    } else if (args is Color) {
-      _colorObjetivo = datosColores.firstWhere(
-        (color) => color.colorHex == args.value,
-        orElse: () => datosColores.first,
-      );
-    } else {
-      _colorObjetivo = datosColores.first;
-    }
-
+    _colorObjetivo = args is ColorModel ? args : datosColores.first;
     _opciones = _generarOpciones();
     _initialized = true;
   }
@@ -120,14 +109,105 @@ class _ColorPracticaScreenState extends State<ColorPracticaScreen> {
   }
 
   void _mostrarDialogoCorrecto() {
-    PracticeSuccessDialog.show(
+    final currentIndex = datosColores.indexWhere(
+      (color) => color.clave == _colorObjetivo.clave,
+    );
+    final hasNext = currentIndex >= 0 && currentIndex < datosColores.length - 1;
+    final nextColor = hasNext ? datosColores[currentIndex + 1] : null;
+
+    showDialog(
       context: context,
-      message:
-          '¡Muy bien! Encontraste todas las formas de color ${_colorObjetivo.nombre}.',
-      primaryText: 'Practicar otra vez',
-      secondaryText: 'Volver',
-      onPrimary: _reiniciarOpciones,
-      onSecondary: () => Navigator.pop(context, true),
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(26),
+          ),
+          title: const Text(
+            '¡Excelente! ⭐',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: ColoresApp.completado,
+              fontWeight: FontWeight.w900,
+              fontSize: 24,
+            ),
+          ),
+          content: Text(
+            'Encontraste todas las formas de color ${_colorObjetivo.nombre}.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: ColoresApp.azulMedio,
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+            ),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
+          actions: [
+            Wrap(
+              spacing: 12,
+              runSpacing: 10,
+              alignment: WrapAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                    _reiniciarOpciones();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ColoresApp.naranjaVibrante,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 12,
+                    ),
+                  ),
+                  child: const Text(
+                    'Practicar otra vez',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                    if (hasNext && nextColor != null) {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        '/color_practica',
+                        arguments: nextColor,
+                      );
+                    } else {
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        '/home',
+                        (route) => false,
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF339AF0),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 12,
+                    ),
+                  ),
+                  child: Text(
+                    hasNext ? 'Siguiente color' : 'Volver al menú',
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -150,11 +230,13 @@ class _ColorPracticaScreenState extends State<ColorPracticaScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 6),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
               child: Row(
                 children: [
-                  _buildTitleCard(),
-                  const Spacer(),
+                  Expanded(child: _buildTitleCard()),
+                  const SizedBox(width: 8),
+                  const HomeButton.iconOnly(),
+                  const SizedBox(width: 8),
                   BotonAccion(
                     texto: 'VOLVER',
                     icono: Icons.arrow_back_rounded,
@@ -218,7 +300,8 @@ class _ColorPracticaScreenState extends State<ColorPracticaScreen> {
 
   Widget _buildTitleCard() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.90),
         borderRadius: BorderRadius.circular(25),
@@ -231,11 +314,15 @@ class _ColorPracticaScreenState extends State<ColorPracticaScreen> {
           ),
         ],
       ),
-      child: const AppTexto.titulo(
-        'Práctica',
-        color: ColoresApp.rojo,
-        shadows: SombrasApp.blanca,
-        fontSize: 28,
+      child: const FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: AppTexto.titulo(
+          'Práctica',
+          color: ColoresApp.rojo,
+          shadows: SombrasApp.blanca,
+          fontSize: 28,
+        ),
       ),
     );
   }

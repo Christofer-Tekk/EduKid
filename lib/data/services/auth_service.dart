@@ -7,54 +7,99 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // ── Iniciar sesión con correo ─────────────────────────────────
   Future<UserCredential> signIn({
     required String email,
     required String password,
   }) async {
+    final normalizedEmail = email.trim().toLowerCase();
+
     final credential = await _auth.signInWithEmailAndPassword(
-      email: email,
+      email: normalizedEmail,
       password: password,
     );
+
+    await _safeEnsureEmailUserDocument(credential.user, normalizedEmail);
+
     return credential;
   }
 
-  // ── Registrar con correo ──────────────────────────────────────
   Future<UserCredential> register({
     required String email,
     required String password,
   }) async {
+    final normalizedEmail = email.trim().toLowerCase();
+
+    await _validateEmailProviders(normalizedEmail);
+
     final credential = await _auth.createUserWithEmailAndPassword(
-      email: email,
+      email: normalizedEmail,
       password: password,
     );
 
-    // Guardar en Firestore (sin bloquear el login si falla)
-    try {
-      await _db.collection('users').doc(credential.user!.uid).set({
-        'uid': credential.user!.uid,
-        'email': email,
-        'creadoEn': FieldValue.serverTimestamp(),
-        'metodo': 'correo',
-      });
-    } catch (_) {
-      // No bloquear el registro si Firestore falla
-    }
+    await _safeEnsureEmailUserDocument(credential.user, normalizedEmail);
 
     return credential;
   }
 
-  // ── Restablecer contraseña ────────────────────────────────────
-  Future<void> sendPasswordReset(String email) async {
-    await _auth.sendPasswordResetEmail(email: email);
+  Future<void> _validateEmailProviders(String email) async {
+    try {
+      final methods = await _auth.fetchSignInMethodsForEmail(email);
+
+      if (methods.contains('google.com') && !methods.contains('password')) {
+        throw FirebaseAuthException(
+          code: 'email-already-google',
+          message: 'Este correo ya está registrado con Google.',
+        );
+      }
+
+      if (methods.contains('password')) {
+        throw FirebaseAuthException(
+          code: 'email-already-password',
+          message: 'Este correo ya está registrado con correo y contraseña.',
+        );
+      }
+    } on FirebaseAuthException {
+      rethrow;
+    } catch (_) {
+      // Si no se puede consultar proveedores, dejamos que Firebase valide al crear.
+    }
   }
 
-  // ── Cerrar sesión ─────────────────────────────────────────────
+  Future<void> _safeEnsureEmailUserDocument(
+    User? user,
+    String email,
+  ) async {
+    if (user == null) return;
+
+    try {
+      final docRef = _db.collection('users').doc(user.uid);
+      final snapshot = await docRef.get();
+
+      final data = <String, dynamic>{
+        'uid': user.uid,
+        'email': email,
+        'metodo': 'correo',
+        'actualizadoEn': FieldValue.serverTimestamp(),
+      };
+
+      if (!snapshot.exists) {
+        data['creadoEn'] = FieldValue.serverTimestamp();
+      }
+
+      await docRef.set(data, SetOptions(merge: true));
+    } catch (_) {
+      // No bloquear login/registro si Firestore falla.
+    }
+  }
+
+  Future<void> sendPasswordReset(String email) async {
+    await _auth.sendPasswordResetEmail(email: email.trim().toLowerCase());
+  }
+
   Future<void> signOut() async {
     await _auth.signOut();
   }
 
-  // ── Usuario actual ────────────────────────────────────────────
   User? get currentUser => _auth.currentUser;
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();

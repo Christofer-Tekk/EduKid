@@ -99,6 +99,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return null;
     }
 
+    if (password.length < 6) {
+      return 'La contraseña debe tener al menos 6 caracteres.';
+    }
+
     return null;
   }
 
@@ -182,12 +186,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   String _mapRegisterError(String code) {
     switch (code) {
+      case 'email-already-google':
+        return 'Ese correo ya está registrado con Google. Continúa con Google desde iniciar sesión.';
+      case 'email-already-password':
       case 'email-already-in-use':
-        return 'Ese correo ya está registrado.';
+        return 'Ese correo ya está registrado. Inicia sesión.';
       case 'invalid-email':
         return 'El correo no es válido.';
       case 'weak-password':
-        return 'La contraseña es muy corta o débil.';
+        return 'La contraseña debe tener al menos 6 caracteres.';
+      case 'operation-not-allowed':
+        return 'El registro con correo no está habilitado.';
       case 'network-request-failed':
         return 'Revisa tu conexión a internet.';
       default:

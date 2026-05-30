@@ -8,6 +8,7 @@ import '../../../core/constants/colores_app.dart';
 import '../../../core/widgets/app_texto.dart';
 import '../../../core/widgets/background_wrapper.dart';
 import '../../../core/widgets/boton_accion.dart';
+import '../../../core/widgets/home_button.dart';
 import '../../../data/models/forma_model.dart';
 import '../controllers/formas_controller.dart';
 
@@ -47,8 +48,19 @@ class _FormasScreenState extends State<FormasScreen> {
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 6),
                   child: Row(
                     children: [
-                      _buildTitleCard(),
-                      const Spacer(),
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: _buildTitleCard(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const HomeButton.iconOnly(),
+                      const SizedBox(width: 10),
                       BotonAccion(
                         texto: 'VOLVER',
                         icono: Icons.arrow_back_rounded,

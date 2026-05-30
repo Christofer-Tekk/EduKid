@@ -7,6 +7,7 @@ import '../../../core/constants/colores_app.dart';
 import '../../../core/widgets/app_texto.dart';
 import '../../../core/widgets/background_wrapper.dart';
 import '../../../core/widgets/boton_accion.dart';
+import '../../../core/widgets/home_button.dart';
 import '../../../data/models/color_model.dart';
 import '../controllers/colores_controller.dart';
 
@@ -43,11 +44,13 @@ class _ColoresScreenState extends State<ColoresScreen> {
             return Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 6),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
                   child: Row(
                     children: [
-                      _buildTitleCard(),
-                      const Spacer(),
+                      Expanded(child: _buildTitleCard()),
+                      const SizedBox(width: 8),
+                      const HomeButton.iconOnly(),
+                      const SizedBox(width: 8),
                       BotonAccion(
                         texto: 'VOLVER',
                         icono: Icons.arrow_back_rounded,
@@ -102,7 +105,8 @@ class _ColoresScreenState extends State<ColoresScreen> {
 
   Widget _buildTitleCard() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.90),
         borderRadius: BorderRadius.circular(26),
@@ -115,11 +119,15 @@ class _ColoresScreenState extends State<ColoresScreen> {
           ),
         ],
       ),
-      child: const AppTexto.titulo(
-        'Colores',
-        color: EstilosPantalla.tituloColores,
-        shadows: SombrasApp.blanca,
-        fontSize: 30,
+      child: const FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: AppTexto.titulo(
+          'Colores',
+          color: EstilosPantalla.tituloColores,
+          shadows: SombrasApp.blanca,
+          fontSize: 30,
+        ),
       ),
     );
   }

@@ -185,7 +185,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _signInWithGoogle() async {
+    FocusScope.of(context).unfocus();
     _messageTimer?.cancel();
+
     setState(() {
       _isGoogleLoading = true;
       _topMessage = null;
@@ -194,7 +196,6 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final result = await _googleSignInService.signInWithGoogle();
 
-      // Usuario canceló
       if (result == null) {
         if (mounted) setState(() => _isGoogleLoading = false);
         return;
@@ -202,82 +203,33 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
 
-      // ── Usuario NUEVO → preguntar si quiere crear cuenta ──────
-      if (result.isNewUser) {
-        // Eliminar la cuenta recién creada — no confirmó aún
-        await result.credential.user?.delete();
-        await _googleSignInService.signOut();
-
-        if (!mounted) return;
-        setState(() => _isGoogleLoading = false);
-
-        // Mostrar diálogo de confirmación
-        final confirmar = await showDialog<bool>(
-          context: context,
-          barrierDismissible: false,
-          builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: const Text(
-              '¿Crear cuenta?',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.w900),
-            ),
-            content: Text(
-              'No tienes una cuenta con\n${result.credential.user?.email ?? 'este correo'}.\n\n¿Quieres registrarte?',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 15),
-            ),
-            actionsAlignment: MainAxisAlignment.center,
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text(
-                  'Cancelar',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF6000),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: () => Navigator.pop(ctx, true),
-                child: const Text(
-                  'Crear cuenta',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-
-        if (confirmar != true || !mounted) return;
-
-        // Volver a hacer el login de Google para crear la cuenta
-        setState(() => _isGoogleLoading = true);
-        final newResult = await _googleSignInService.signInWithGoogle();
-        if (newResult == null || !mounted) {
-          setState(() => _isGoogleLoading = false);
-          return;
-        }
-        Navigator.pushReplacementNamed(context, '/home');
-
-      } else {
-        // ── Usuario EXISTENTE → entrar directo ─────────────────
-        Navigator.pushReplacementNamed(context, '/home');
-      }
-    } catch (e) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/home',
+        (route) => false,
+      );
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      _showTopMessage(_mapGoogleError(e.code));
+    } catch (_) {
       if (!mounted) return;
       _showTopMessage('Error al continuar con Google. Intenta de nuevo.');
     } finally {
       if (mounted) setState(() => _isGoogleLoading = false);
+    }
+  }
+
+  String _mapGoogleError(String code) {
+    switch (code) {
+      case 'account-exists-with-different-credential':
+        return 'Ese correo ya está registrado con otro método. Prueba iniciar sesión con correo o con Google.';
+      case 'network-request-failed':
+        return 'Revisa tu conexión a internet.';
+      case 'popup-closed-by-user':
+      case 'canceled':
+        return 'Inicio con Google cancelado.';
+      default:
+        return 'No se pudo continuar con Google. Intenta de nuevo.';
     }
   }
 
@@ -322,13 +274,14 @@ class _LoginScreenState extends State<LoginScreen> {
       case 'user-not-found':
         return 'No existe una cuenta con ese correo.';
       case 'wrong-password':
-        return 'Contraseña incorrecta.';
       case 'invalid-credential':
         return 'Correo o contraseña incorrectos.';
       case 'invalid-email':
         return 'El correo no es válido.';
       case 'too-many-requests':
         return 'Demasiados intentos. Espera un momento.';
+      case 'user-disabled':
+        return 'Esta cuenta fue deshabilitada.';
       case 'network-request-failed':
         return 'Revisa tu conexión a internet.';
       default:

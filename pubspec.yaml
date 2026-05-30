@@ -49,6 +49,7 @@ flutter:
     - assets/images/animales/
     - assets/images/colores/
     - assets/images/formas/
+    - assets/images/colorear/
     
     # CARPETAS DE AUDIO
     - assets/audio/

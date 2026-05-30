@@ -8,7 +8,9 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/colores_app.dart';
 import '../../../core/widgets/background_wrapper.dart';
 import '../../../core/widgets/boton_accion.dart';
+import '../../../core/widgets/home_button.dart';
 import '../../../core/widgets/practice_success_dialog.dart';
+import '../../../data/local/datos_numeros.dart';
 import '../../../data/models/numero_model.dart';
 import '../../../data/services/progreso_service.dart';
 
@@ -63,6 +65,36 @@ class _NumeroPracticaScreenState extends State<NumeroPracticaScreen> {
     }
   }
 
+  NumeroModel? _obtenerSiguienteNumero() {
+    final numeros = listaNumeros;
+    final index = numeros.indexWhere((item) => item.valor == numero.valor);
+
+    if (index == -1 || index >= numeros.length - 1) {
+      return null;
+    }
+
+    return numeros[index + 1];
+  }
+
+  void _irASiguienteNumero() {
+    final siguiente = _obtenerSiguienteNumero();
+
+    if (siguiente == null) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/home',
+        (route) => false,
+      );
+      return;
+    }
+
+    Navigator.pushReplacementNamed(
+      context,
+      '/numero_practica',
+      arguments: siguiente,
+    );
+  }
+
   void _mostrarDialogoFallo() {
     showDialog(
       context: context,
@@ -105,15 +137,17 @@ class _NumeroPracticaScreenState extends State<NumeroPracticaScreen> {
   }
 
   void _mostrarDialogoExito({required bool yaEstabaCompletado}) {
+    final tieneSiguiente = _obtenerSiguienteNumero() != null;
+
     PracticeSuccessDialog.show(
       context: context,
       message: yaEstabaCompletado
           ? '¡Muy bien! Puedes seguir practicando el número ${numero.valor}.'
           : '¡Completaste el número ${numero.valor}! Ya quedó marcado en tu progreso.',
       primaryText: 'Practicar otra vez',
-      secondaryText: 'Volver',
+      secondaryText: tieneSiguiente ? 'Siguiente número' : 'Volver al menú',
       onPrimary: _limpiarPizarra,
-      onSecondary: () => Navigator.pop(context, true),
+      onSecondary: _irASiguienteNumero,
     );
   }
 
@@ -130,6 +164,12 @@ class _NumeroPracticaScreenState extends State<NumeroPracticaScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const _TituloPracticaCard(texto: 'Práctica'),
+                  const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      HomeButton.iconOnly(),
+                    ],
+                  ),
                   BotonAccion(
                     texto: 'VOLVER',
                     icono: Icons.arrow_back,

@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/colores_app.dart';
+import '../../../core/widgets/home_button.dart';
 
 class PizarraLibreScreen extends StatefulWidget {
   const PizarraLibreScreen({Key? key}) : super(key: key);
@@ -139,10 +140,76 @@ class _PizarraLibreScreenState extends State<PizarraLibreScreen> {
     _limpiarPizarra();
   }
 
+  Widget _buildLienzo() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE0E0E0), width: 2),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onPanStart: (details) => _agregarPunto(details.localPosition),
+          onPanUpdate: (details) => _agregarPunto(details.localPosition),
+          onPanEnd: (_) => _cerrarTrazo(),
+          onPanCancel: _cerrarTrazo,
+          child: CustomPaint(
+            painter: _LibrePainter(_puntos),
+            child: const SizedBox.expand(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaleta() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.98),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE0E0E0), width: 1.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 12,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 14,
+        runSpacing: 10,
+        children: _colores.map((color) {
+          final seleccionado = _colorActual == color && !_modoBorrador;
+          return GestureDetector(
+            onTap: () => _seleccionarColor(color),
+            child: CircleAvatar(
+              backgroundColor: color,
+              radius: 20,
+              child: seleccionado
+                  ? const Icon(Icons.check, color: Colors.white, size: 24)
+                  : null,
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bottomSafe = MediaQuery.of(context).padding.bottom;
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -170,108 +237,72 @@ class _PizarraLibreScreenState extends State<PizarraLibreScreen> {
                       ),
                     ),
                   ),
-                  _BotonSuperior(
-                    texto: 'PRACTICA',
-                    icono: Icons.school,
-                    color: ColoresApp.completado,
-                    onPressed: () => Navigator.pushNamed(context, '/pizarra_guiada'),
-                  ),
+                  const HomeButton.iconOnly(),
                 ],
               ),
             ),
             Expanded(
-              child: Container(
-                width: double.infinity,
-                margin: const EdgeInsets.symmetric(horizontal: 14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFE0E0E0), width: 2),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 10,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(22),
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onPanStart: (details) => _agregarPunto(details.localPosition),
-                    onPanUpdate: (details) => _agregarPunto(details.localPosition),
-                    onPanEnd: (_) => _cerrarTrazo(),
-                    onPanCancel: _cerrarTrazo,
-                    child: CustomPaint(
-                      painter: _LibrePainter(_puntos),
-                      child: const SizedBox.expand(),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned.fill(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 0, 14, 112),
+                      child: _buildLienzo(),
                     ),
                   ),
-                ),
-              ),
-            ),
-            if (_mostrarPaleta)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 10, 24, 0),
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: const Color(0xFFE0E0E0), width: 1.5),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 10,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
+                  Positioned(
+                    left: 24,
+                    right: 24,
+                    bottom: 96,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 180),
+                      transitionBuilder: (child, animation) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(0, 0.12),
+                              end: Offset.zero,
+                            ).animate(animation),
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: _mostrarPaleta
+                          ? _buildPaleta()
+                          : const SizedBox.shrink(key: ValueKey('sin-paleta')),
+                    ),
                   ),
-                  child: Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 14,
-                    runSpacing: 10,
-                    children: _colores.map((color) {
-                      final seleccionado = _colorActual == color && !_modoBorrador;
-                      return GestureDetector(
-                        onTap: () => _seleccionarColor(color),
-                        child: CircleAvatar(
-                          backgroundColor: color,
-                          radius: 20,
-                          child: seleccionado
-                              ? const Icon(Icons.check, color: Colors.white, size: 24)
-                              : null,
-                        ),
-                      );
-                    }).toList(),
+                  Positioned(
+                    left: 20,
+                    right: 20,
+                    bottom: 12,
+                    child: _BarraHerramientas(
+                      modoBorrador: _modoBorrador,
+                      mostrarPaleta: _mostrarPaleta,
+                      onLapiz: () {
+                        setState(() {
+                          _modoBorrador = false;
+                          _mostrarPaleta = false;
+                        });
+                      },
+                      onPaleta: () {
+                        setState(() {
+                          _modoBorrador = false;
+                          _mostrarPaleta = !_mostrarPaleta;
+                        });
+                      },
+                      onBorrador: () {
+                        setState(() {
+                          _modoBorrador = true;
+                          _mostrarPaleta = false;
+                        });
+                      },
+                      onLimpiar: _confirmarLimpiarPizarra,
+                    ),
                   ),
-                ),
-              ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(20, 12, 20, bottomSafe > 0 ? 10 : 16),
-              child: _BarraHerramientas(
-                modoBorrador: _modoBorrador,
-                mostrarPaleta: _mostrarPaleta,
-                onLapiz: () {
-                  setState(() {
-                    _modoBorrador = false;
-                    _mostrarPaleta = false;
-                  });
-                },
-                onPaleta: () {
-                  setState(() {
-                    _modoBorrador = false;
-                    _mostrarPaleta = !_mostrarPaleta;
-                  });
-                },
-                onBorrador: () {
-                  setState(() {
-                    _modoBorrador = true;
-                    _mostrarPaleta = false;
-                  });
-                },
-                onLimpiar: _confirmarLimpiarPizarra,
+                ],
               ),
             ),
           ],

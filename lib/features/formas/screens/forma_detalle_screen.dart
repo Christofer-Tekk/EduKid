@@ -7,6 +7,7 @@ import '../../../core/constants/colores_app.dart';
 import '../../../core/widgets/app_texto.dart';
 import '../../../core/widgets/background_wrapper.dart';
 import '../../../core/widgets/boton_accion.dart';
+import '../../../core/widgets/home_button.dart';
 import '../../../data/local/datos_formas.dart';
 import '../../../data/models/forma_model.dart';
 import '../../../data/services/audio_service.dart';
@@ -35,8 +36,19 @@ class FormaDetalleScreen extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    _buildTitleCapsule(formaItem, color),
-                    const Spacer(),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: _buildTitleCapsule(formaItem, color),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const HomeButton.iconOnly(),
+                    const SizedBox(width: 8),
                     BotonAccion(
                       texto: 'VOLVER',
                       icono: Icons.arrow_back_rounded,

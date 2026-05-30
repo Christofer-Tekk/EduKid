@@ -9,52 +9,60 @@ class GoogleSignInService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  /// Retorna el UserCredential si el login fue exitoso.
-  /// Lanza [GoogleSignInCancelled] si el usuario canceló.
-  /// [isNewUser] indica si es la primera vez que se registra.
   Future<({UserCredential credential, bool isNewUser})?>
       signInWithGoogle() async {
-    // Cerrar sesión previa de Google para forzar selector de cuenta
     await _googleSignIn.signOut();
 
-    final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+    final googleUser = await _googleSignIn.signIn();
 
-    // Usuario canceló
     if (googleUser == null) return null;
 
-    final GoogleSignInAuthentication googleAuth =
-        await googleUser.authentication;
+    final googleAuth = await googleUser.authentication;
 
     final oauthCredential = GoogleAuthProvider.credential(
       accessToken: googleAuth.accessToken,
       idToken: googleAuth.idToken,
     );
 
-    final userCredential =
-        await _auth.signInWithCredential(oauthCredential);
+    final userCredential = await _auth.signInWithCredential(oauthCredential);
+    final user = userCredential.user;
 
-    final isNewUser =
-        userCredential.additionalUserInfo?.isNewUser ?? false;
-
-    // Si es usuario nuevo, guardar en Firestore
-    if (isNewUser) {
-      try {
-        await _db
-            .collection('users')
-            .doc(userCredential.user!.uid)
-            .set({
-          'uid': userCredential.user!.uid,
-          'email': userCredential.user!.email ?? '',
-          'nombre': userCredential.user!.displayName ?? '',
-          'creadoEn': FieldValue.serverTimestamp(),
-          'metodo': 'google',
-        });
-      } catch (_) {
-        // No bloquear si Firestore falla
-      }
+    if (user == null) {
+      throw FirebaseAuthException(
+        code: 'google-user-null',
+        message: 'No se pudo obtener el usuario de Google.',
+      );
     }
 
+    final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
+
+    await _safeEnsureGoogleUserDocument(user);
+
     return (credential: userCredential, isNewUser: isNewUser);
+  }
+
+  Future<void> _safeEnsureGoogleUserDocument(User user) async {
+    try {
+      final docRef = _db.collection('users').doc(user.uid);
+      final snapshot = await docRef.get();
+
+      final data = <String, dynamic>{
+        'uid': user.uid,
+        'email': user.email ?? '',
+        'nombre': user.displayName ?? '',
+        'fotoUrl': user.photoURL ?? '',
+        'metodo': 'google',
+        'actualizadoEn': FieldValue.serverTimestamp(),
+      };
+
+      if (!snapshot.exists) {
+        data['creadoEn'] = FieldValue.serverTimestamp();
+      }
+
+      await docRef.set(data, SetOptions(merge: true));
+    } catch (_) {
+      // No bloquear el acceso si Firestore falla.
+    }
   }
 
   Future<void> signOut() async {

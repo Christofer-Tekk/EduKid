@@ -7,6 +7,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/colores_app.dart';
 import '../../../core/widgets/background_wrapper.dart';
 import '../../../core/widgets/boton_accion.dart';
+import '../../../core/widgets/home_button.dart';
 import '../../../data/models/numero_model.dart';
 import '../../../data/services/audio_service.dart';
 
@@ -86,7 +87,9 @@ class _NumeroDetalleScreenState extends State<NumeroDetalleScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
+                  const HomeButton.iconOnly(),
+                  const SizedBox(width: 10),
                   BotonAccion(
                     texto: 'VOLVER',
                     icono: Icons.arrow_back,

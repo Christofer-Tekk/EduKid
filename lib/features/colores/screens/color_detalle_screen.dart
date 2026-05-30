@@ -7,6 +7,7 @@ import '../../../core/constants/colores_app.dart';
 import '../../../core/widgets/app_texto.dart';
 import '../../../core/widgets/background_wrapper.dart';
 import '../../../core/widgets/boton_accion.dart';
+import '../../../core/widgets/home_button.dart';
 import '../../../data/local/datos_colores.dart';
 import '../../../data/models/color_model.dart';
 import '../../../data/services/audio_service.dart';
@@ -31,13 +32,17 @@ class ColorDetalleScreen extends StatelessWidget {
       child: SizedBox.expand(
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 26),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 26),
             child: Column(
               children: [
                 Row(
                   children: [
-                    _buildTitleCapsule(colorItem, color, isWhite),
-                    const Spacer(),
+                    Expanded(
+                      child: _buildTitleCapsule(colorItem, color, isWhite),
+                    ),
+                    const SizedBox(width: 8),
+                    const HomeButton.iconOnly(),
+                    const SizedBox(width: 8),
                     BotonAccion(
                       texto: 'VOLVER',
                       icono: Icons.arrow_back_rounded,
@@ -88,7 +93,8 @@ class ColorDetalleScreen extends StatelessWidget {
 
   Widget _buildTitleCapsule(ColorModel colorItem, Color color, bool isWhite) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.90),
         borderRadius: BorderRadius.circular(28),
@@ -101,11 +107,15 @@ class ColorDetalleScreen extends StatelessWidget {
           ),
         ],
       ),
-      child: AppTexto.titulo(
-        colorItem.nombre,
-        color: isWhite ? ColoresApp.azulMedio : color,
-        shadows: SombrasApp.blanca,
-        fontSize: 31,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: AppTexto.titulo(
+          colorItem.nombre,
+          color: isWhite ? ColoresApp.azulMedio : color,
+          shadows: SombrasApp.blanca,
+          fontSize: 31,
+        ),
       ),
     );
   }
@@ -143,7 +153,7 @@ class ColorDetalleScreen extends StatelessWidget {
                     color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: AppTexto.subtitulo(
+                  child: const AppTexto.subtitulo(
                     'Imagen no encontrada',
                     color: ColoresApp.azulMedio,
                     shadows: SombrasApp.ninguna,

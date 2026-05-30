@@ -1,24 +1,28 @@
+// lib/features/practica/screens/practica_numeros_screen.dart
+
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/colores_app.dart';
+import '../../../core/widgets/home_button.dart';
+import '../../../data/local/datos_numeros.dart';
 
-class PizarraGuiadaScreen extends StatefulWidget {
-  const PizarraGuiadaScreen({Key? key}) : super(key: key);
+class PracticaNumerosScreen extends StatefulWidget {
+  const PracticaNumerosScreen({super.key});
 
   @override
-  State<PizarraGuiadaScreen> createState() => _PizarraGuiadaScreenState();
+  State<PracticaNumerosScreen> createState() => _PracticaNumerosScreenState();
 }
 
-class _PizarraGuiadaScreenState extends State<PizarraGuiadaScreen> {
+class _PracticaNumerosScreenState extends State<PracticaNumerosScreen> {
   final List<Offset?> _puntos = [];
   final GlobalKey _canvasKey = GlobalKey();
-  String _letraActual = '';
-
   final Random _random = Random();
-  final String _abecedario = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ';
+
+  late List<String> _numeros;
+  late String _numeroActual;
 
   final Color _colorLetraFondo = Colors.grey.withOpacity(0.28);
   final Color _colorTrazado = ColoresApp.magentaLogo;
@@ -29,13 +33,14 @@ class _PizarraGuiadaScreenState extends State<PizarraGuiadaScreen> {
   @override
   void initState() {
     super.initState();
-    _cambiarLetraAleatoria();
+    _numeros = [for (final numero in listaNumeros) numero.valor.toString()];
+    _cambiarNumeroAleatorio();
   }
 
-  void _cambiarLetraAleatoria() {
+  void _cambiarNumeroAleatorio() {
     setState(() {
       _puntos.clear();
-      _letraActual = _abecedario[_random.nextInt(_abecedario.length)];
+      _numeroActual = _numeros[_random.nextInt(_numeros.length)];
     });
   }
 
@@ -62,7 +67,7 @@ class _PizarraGuiadaScreenState extends State<PizarraGuiadaScreen> {
             ),
           ),
           content: const Text(
-            'Se borrará el trazo actual de la letra.',
+            'Se borrará el trazo actual.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.black87,
@@ -141,22 +146,22 @@ class _PizarraGuiadaScreenState extends State<PizarraGuiadaScreen> {
 
     if (puntosValidos.length < 35) return 0.0;
 
-    final letraRect = _obtenerRectLetra(size).inflate(22);
-    final puntosDentroLetra = puntosValidos.where(letraRect.contains).toList();
+    final numeroRect = _obtenerRectNumero(size).inflate(22);
+    final puntosDentroNumero = puntosValidos.where(numeroRect.contains).toList();
 
-    if (puntosDentroLetra.length < 30) return 0.0;
+    if (puntosDentroNumero.length < 30) return 0.0;
 
-    final proporcionDentro = puntosDentroLetra.length / puntosValidos.length;
+    final proporcionDentro = puntosDentroNumero.length / puntosValidos.length;
     if (proporcionDentro < 0.55) return 0.0;
 
     final recorrido = _calcularRecorridoTotal(_puntos);
     if (recorrido < min(size.width, size.height) * 0.45) return 0.0;
 
-    final zonas = _crearZonasLetra(letraRect);
+    final zonas = _crearZonasNumero(numeroRect);
     int zonasCubiertas = 0;
 
     for (final zona in zonas) {
-      final puntosEnZona = puntosDentroLetra.where((punto) => zona.contains(punto)).length;
+      final puntosEnZona = puntosDentroNumero.where((punto) => zona.contains(punto)).length;
       if (puntosEnZona >= 8) zonasCubiertas++;
     }
 
@@ -183,11 +188,11 @@ class _PizarraGuiadaScreenState extends State<PizarraGuiadaScreen> {
     return total;
   }
 
-  Rect _obtenerRectLetra(Size size) {
+  Rect _obtenerRectNumero(Size size) {
     final fontSize = _calcularFontSize(size);
     final textPainter = TextPainter(
       text: TextSpan(
-        text: _letraActual,
+        text: _numeroActual,
         style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold),
       ),
       textDirection: TextDirection.ltr,
@@ -202,10 +207,33 @@ class _PizarraGuiadaScreenState extends State<PizarraGuiadaScreen> {
   }
 
   double _calcularFontSize(Size size) {
-    return min(size.width * 0.92, size.height * 0.62);
+    final maxWidth = size.width * 0.82;
+    final maxHeight = size.height * 0.58;
+    double fontSize = maxHeight;
+
+    final textPainter = TextPainter(textDirection: TextDirection.ltr);
+
+    while (fontSize > 42) {
+      textPainter.text = TextSpan(
+        text: _numeroActual,
+        style: TextStyle(
+          fontSize: fontSize,
+          fontWeight: FontWeight.bold,
+        ),
+      );
+      textPainter.layout();
+
+      if (textPainter.width <= maxWidth && textPainter.height <= maxHeight) {
+        return fontSize;
+      }
+
+      fontSize -= 4;
+    }
+
+    return 42;
   }
 
-  List<Rect> _crearZonasLetra(Rect rect) {
+  List<Rect> _crearZonasNumero(Rect rect) {
     return [
       Rect.fromLTWH(rect.left, rect.top, rect.width / 2, rect.height / 2),
       Rect.fromLTWH(rect.left + rect.width / 2, rect.top, rect.width / 2, rect.height / 2),
@@ -224,17 +252,17 @@ class _PizarraGuiadaScreenState extends State<PizarraGuiadaScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           backgroundColor: Colors.white,
           title: const Text(
-            '¡Excelente!',
+            '¡Excelente! ⭐',
             style: TextStyle(
-              color: Colors.green,
+              color: ColoresApp.completado,
               fontWeight: FontWeight.bold,
               fontSize: 24,
             ),
             textAlign: TextAlign.center,
           ),
-          content: const Text(
-            'Has trazado la letra muy bien.',
-            style: TextStyle(color: Colors.black87, fontSize: 18),
+          content: Text(
+            'Has trazado el número $_numeroActual muy bien.',
+            style: const TextStyle(color: Colors.black87, fontSize: 18),
             textAlign: TextAlign.center,
           ),
           actionsAlignment: MainAxisAlignment.center,
@@ -251,7 +279,7 @@ class _PizarraGuiadaScreenState extends State<PizarraGuiadaScreen> {
               ),
               onPressed: () {
                 Navigator.of(context).pop();
-                _cambiarLetraAleatoria();
+                _cambiarNumeroAleatorio();
               },
             ),
           ],
@@ -278,7 +306,7 @@ class _PizarraGuiadaScreenState extends State<PizarraGuiadaScreen> {
             textAlign: TextAlign.center,
           ),
           content: const Text(
-            'Traza encima de la letra gris. Si rayas fuera de la letra, no contará como correcto.',
+            'Traza encima del número gris. Si rayas fuera del número, no contará como correcto.',
             style: TextStyle(color: Colors.black87, fontSize: 16),
             textAlign: TextAlign.center,
           ),
@@ -336,10 +364,7 @@ class _PizarraGuiadaScreenState extends State<PizarraGuiadaScreen> {
                 child: ClipRect(
                   child: LayoutBuilder(
                     builder: (context, boardConstraints) {
-                      final canvasSize = Size(
-                        boardConstraints.maxWidth,
-                        boardConstraints.maxHeight,
-                      );
+                      final canvasSize = Size(boardConstraints.maxWidth, boardConstraints.maxHeight);
 
                       return GestureDetector(
                         behavior: HitTestBehavior.opaque,
@@ -349,11 +374,11 @@ class _PizarraGuiadaScreenState extends State<PizarraGuiadaScreen> {
                         onPanCancel: _cerrarTrazo,
                         child: CustomPaint(
                           key: _canvasKey,
-                          painter: _LinePainter(
+                          painter: _TracePainter(
                             points: _puntos,
                             traceColor: _colorTrazado,
-                            letra: _letraActual,
-                            letterColor: _colorLetraFondo,
+                            label: _numeroActual,
+                            labelColor: _colorLetraFondo,
                           ),
                           child: const SizedBox.expand(),
                         ),
@@ -370,17 +395,48 @@ class _PizarraGuiadaScreenState extends State<PizarraGuiadaScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     _EtiquetaSuperior(
-                      texto: 'PRACTICA',
+                      texto: 'NÚMEROS',
                       color: ColoresApp.naranjaVibrante,
-                      icono: Icons.edit,
+                      icono: Icons.pin_rounded,
                     ),
-                    _BotonSuperior(
-                      texto: 'VOLVER',
-                      icono: Icons.arrow_back,
-                      color: _colorBotonVolver,
-                      onPressed: () => Navigator.of(context).pop(),
+                    Row(
+                      children: [
+                        const HomeButton.iconOnly(),
+                        const SizedBox(width: 8),
+                        _BotonSuperior(
+                          texto: 'VOLVER',
+                          icono: Icons.arrow_back,
+                          color: _colorBotonVolver,
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ],
                     ),
                   ],
+                ),
+              ),
+              Positioned(
+                top: safeTop + 70,
+                left: 18,
+                right: 18,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.90),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 8, offset: const Offset(0, 3)),
+                      ],
+                    ),
+                    child: Text(
+                      'Traza el número $_numeroActual',
+                      style: const TextStyle(
+                        color: ColoresApp.azulMarino,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
                 ),
               ),
               Positioned(
@@ -528,27 +584,54 @@ class _BotonInferior extends StatelessWidget {
   }
 }
 
-class _LinePainter extends CustomPainter {
+class _TracePainter extends CustomPainter {
   final List<Offset?> points;
   final Color traceColor;
-  final String letra;
-  final Color letterColor;
+  final String label;
+  final Color labelColor;
 
-  _LinePainter({
+  _TracePainter({
     required this.points,
     required this.traceColor,
-    required this.letra,
-    required this.letterColor,
+    required this.label,
+    required this.labelColor,
   });
+
+  double _calcularFontSize(Size size) {
+    final maxWidth = size.width * 0.82;
+    final maxHeight = size.height * 0.58;
+    double fontSize = maxHeight;
+
+    final textPainter = TextPainter(textDirection: TextDirection.ltr);
+
+    while (fontSize > 42) {
+      textPainter.text = TextSpan(
+        text: label,
+        style: TextStyle(
+          fontSize: fontSize,
+          fontWeight: FontWeight.bold,
+        ),
+      );
+      textPainter.layout();
+
+      if (textPainter.width <= maxWidth && textPainter.height <= maxHeight) {
+        return fontSize;
+      }
+
+      fontSize -= 4;
+    }
+
+    return 42;
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
-    final fontSize = min(size.width * 0.92, size.height * 0.62);
+    final fontSize = _calcularFontSize(size);
     final textPainter = TextPainter(
       text: TextSpan(
-        text: letra,
+        text: label,
         style: TextStyle(
-          color: letterColor,
+          color: labelColor,
           fontSize: fontSize,
           fontWeight: FontWeight.bold,
         ),
@@ -556,13 +639,10 @@ class _LinePainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     );
 
-    textPainter.layout(maxWidth: size.width);
+    textPainter.layout();
     textPainter.paint(
       canvas,
-      Offset(
-        (size.width - textPainter.width) / 2,
-        (size.height - textPainter.height) / 2,
-      ),
+      Offset((size.width - textPainter.width) / 2, (size.height - textPainter.height) / 2),
     );
 
     final paint = Paint()
@@ -581,5 +661,5 @@ class _LinePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _LinePainter oldDelegate) => true;
+  bool shouldRepaint(covariant _TracePainter oldDelegate) => true;
 }

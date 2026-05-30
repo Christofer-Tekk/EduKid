@@ -8,6 +8,7 @@ import '../../../core/constants/colores_app.dart';
 import '../../../core/widgets/app_texto.dart';
 import '../../../core/widgets/background_wrapper.dart';
 import '../../../core/widgets/boton_accion.dart';
+import '../../../core/widgets/home_button.dart';
 import '../../../core/widgets/practice_success_dialog.dart';
 import '../../../data/local/datos_formas.dart';
 import '../../../data/models/forma_model.dart';
@@ -114,15 +115,52 @@ class _FormaPracticaScreenState extends State<FormaPracticaScreen> {
     }
   }
 
+  FormaModel? _obtenerSiguienteForma() {
+    final indexActual = datosFormas.indexWhere(
+      (forma) => forma.clave == _formaObjetivo.clave,
+    );
+
+    if (indexActual == -1 || indexActual >= datosFormas.length - 1) {
+      return null;
+    }
+
+    return datosFormas[indexActual + 1];
+  }
+
+  void _irASiguienteForma() {
+    final siguienteForma = _obtenerSiguienteForma();
+
+    if (siguienteForma == null) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/home',
+        (route) => false,
+      );
+      return;
+    }
+
+    setState(() {
+      _formaObjetivo = siguienteForma;
+      _mensaje = null;
+      _respuestaCorrecta = false;
+      _practicaCompletada = false;
+      _correctasSeleccionadas.clear();
+      _incorrectasSeleccionadas.clear();
+      _opciones = _generarOpciones();
+    });
+  }
+
   void _mostrarDialogoCorrecto() {
+    final siguienteForma = _obtenerSiguienteForma();
+
     PracticeSuccessDialog.show(
       context: context,
       message:
           '¡Muy bien! Encontraste todas las figuras con forma de ${_formaObjetivo.nombre}.',
       primaryText: 'Practicar otra vez',
-      secondaryText: 'Volver',
+      secondaryText: siguienteForma == null ? 'Volver al menú' : 'Siguiente forma',
       onPrimary: _reiniciar,
-      onSecondary: () => Navigator.pop(context, true),
+      onSecondary: _irASiguienteForma,
     );
   }
 
@@ -149,8 +187,19 @@ class _FormaPracticaScreenState extends State<FormaPracticaScreen> {
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 6),
               child: Row(
                 children: [
-                  _buildTitleCard(),
-                  const Spacer(),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: _buildTitleCard(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const HomeButton.iconOnly(),
+                  const SizedBox(width: 10),
                   BotonAccion(
                     texto: 'VOLVER',
                     icono: Icons.arrow_back_rounded,

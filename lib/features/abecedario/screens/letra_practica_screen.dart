@@ -5,7 +5,9 @@ import '../../../core/widgets/background_wrapper.dart';
 import '../../../core/widgets/boton_accion.dart';
 import '../../../core/widgets/app_texto.dart';
 import '../../../core/widgets/practice_success_dialog.dart';
+import '../../../core/widgets/home_button.dart';
 import '../../../core/constants/colores_app.dart';
+import '../../../data/local/datos_abecedario.dart';
 import '../../../data/models/letra_model.dart';
 import '../../../data/services/progreso_service.dart';
 
@@ -65,6 +67,47 @@ class _LetraPracticaScreenState extends State<LetraPracticaScreen> {
     }
   }
 
+  LetraModel? _obtenerSiguienteLetra() {
+    final letras = DatosAbecedario.obtenerLetras();
+    final index = letras.indexWhere(
+      (item) => item.letraMayuscula == letra.letraMayuscula,
+    );
+
+    if (index == -1 || index >= letras.length - 1) {
+      return null;
+    }
+
+    return letras[index + 1];
+  }
+
+  void _reiniciarPracticaActual() {
+    setState(() {
+      _enMinuscula = false;
+      _mayusculaCompletada = false;
+      _minusculaCompletada = false;
+    });
+    _pizarraKey.currentState?.limpiar();
+  }
+
+  void _irAlSiguienteOMenu() {
+    final siguiente = _obtenerSiguienteLetra();
+
+    if (siguiente == null) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/home',
+        (route) => false,
+      );
+      return;
+    }
+
+    Navigator.pushReplacementNamed(
+      context,
+      '/letra_practica',
+      arguments: siguiente,
+    );
+  }
+
   // --- DIÁLOGOS (Sin cambios en UI) ---
   void _mostrarDialogoPasarMinuscula() {
     showDialog(
@@ -99,21 +142,16 @@ class _LetraPracticaScreenState extends State<LetraPracticaScreen> {
   }
 
   void _mostrarDialogoExito() {
+    final siguiente = _obtenerSiguienteLetra();
+
     PracticeSuccessDialog.show(
       context: context,
       message:
-          '¡Muy bien! Completaste la letra ${letra.letraMayuscula}. Puedes seguir practicando cuando quieras.',
+          '¡Muy bien! Completaste la letra ${letra.letraMayuscula}.',
       primaryText: 'Practicar otra vez',
-      secondaryText: 'Volver',
-      onPrimary: () {
-        setState(() {
-          _enMinuscula = false;
-          _mayusculaCompletada = false;
-          _minusculaCompletada = false;
-        });
-        _pizarraKey.currentState?.limpiar();
-      },
-      onSecondary: () => Navigator.pop(context, true),
+      secondaryText: siguiente == null ? 'Volver al menú' : 'Siguiente letra',
+      onPrimary: _reiniciarPracticaActual,
+      onSecondary: _irAlSiguienteOMenu,
     );
   }
 
@@ -158,12 +196,19 @@ class _LetraPracticaScreenState extends State<LetraPracticaScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const _TextoPracticaCard.titulo('Practica'),
-                  BotonAccion(
-                    texto: 'VOLVER',
-                    icono: Icons.arrow_back,
-                    colorPrincipal: Colors.blue,
-                    colorSombra: const Color(0xFF1971C2),
-                    onPressed: () => Navigator.pop(context),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const HomeButton.iconOnly(),
+                      const SizedBox(width: 8),
+                      BotonAccion(
+                        texto: 'VOLVER',
+                        icono: Icons.arrow_back,
+                        colorPrincipal: Colors.blue,
+                        colorSombra: const Color(0xFF1971C2),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
                   ),
                 ],
               ),

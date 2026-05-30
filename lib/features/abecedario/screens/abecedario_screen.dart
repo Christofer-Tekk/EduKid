@@ -8,6 +8,7 @@ import '../../../core/constants/colores_app.dart';
 import '../../../core/widgets/background_wrapper.dart';
 import '../../../core/widgets/boton_accion.dart';
 import '../../../core/widgets/estado_item.dart';
+import '../../../core/widgets/home_button.dart';
 import '../controllers/abecedario_controller.dart';
 
 class AbecedarioScreen extends StatelessWidget {
@@ -34,12 +35,19 @@ class AbecedarioScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    BotonAccion(
-                      texto: 'VOLVER',
-                      icono: Icons.arrow_back,
-                      colorPrincipal: Colors.blue,
-                      colorSombra: const Color(0xFF1971C2),
-                      onPressed: () => Navigator.pop(context),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const HomeButton.iconOnly(),
+                        const SizedBox(width: 8),
+                        BotonAccion(
+                          texto: 'VOLVER',
+                          icono: Icons.arrow_back,
+                          colorPrincipal: Colors.blue,
+                          colorSombra: const Color(0xFF1971C2),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
                     ),
                   ],
                 ),
